@@ -29,10 +29,18 @@ export type CacheMiddlewareOptions = {
         request: OpenFetchConfig;
         url: string;
     }) => string;
+    /**
+     * Header names (case-insensitive) to fold into the cache key after the default or custom `key`.
+     * Use for authenticated or personalized GETs, e.g. `["authorization", "cookie"]`, so entries do not leak across users.
+     */
+    varyHeaderNames?: string[];
 };
+/** Append a stable suffix from header values so cache keys differ per auth/cookie (etc.). */
+export declare function appendCacheKeyVaryHeaders(baseKey: string, headers: Record<string, string> | undefined, headerNames: string[]): string;
 /**
  * In-memory cache with TTL and optional stale-while-revalidate (background `dispatch`).
  * Skips when `memoryCache.skip` is true. Uses `memoryCache.ttlMs` / `staleWhileRevalidateMs` per request when set.
+ * For per-user or authenticated responses, set `varyHeaderNames` (e.g. `["authorization","cookie"]`) or a custom `key`.
  */
 export declare function createCacheMiddleware(store: MemoryCacheStore, options?: CacheMiddlewareOptions): Middleware;
 //# sourceMappingURL=cache.d.ts.map

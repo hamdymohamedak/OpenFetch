@@ -17,6 +17,11 @@ export type OpenFetchRetryOptions = {
     retryOnStatus?: number[];
     /** Retry when no response / network failure. Default true. */
     retryOnNetworkError?: boolean;
+    /**
+     * When true, network/parse failures and retryable HTTP statuses are retried for any method (e.g. POST).
+     * Default false: only GET, HEAD, OPTIONS, and TRACE are retried for those cases to avoid duplicate side effects.
+     */
+    retryNonIdempotentMethods?: boolean;
     /** Optional custom gate (runs after built-in rules). */
     shouldRetry?: (error: unknown, attempt: number) => boolean | Promise<boolean>;
 };

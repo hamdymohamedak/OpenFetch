@@ -55,6 +55,31 @@ const users = await api.get("/v1/users");
 | Retry | `createRetryMiddleware()` with exponential backoff |
 | Cache | `MemoryCacheStore` + `createCacheMiddleware()` (TTL, optional stale-while-revalidate) |
 
+### Memory cache and authentication
+
+The default cache key is ``METHOD fullUrl``. For **authenticated or per-user** GETs, also pass header names that affect the response so entries do not leak across users:
+
+```ts
+createCacheMiddleware(store, {
+  ttlMs: 60_000,
+  varyHeaderNames: ["authorization", "cookie"],
+});
+```
+
+Or build a custom `key` and use `appendCacheKeyVaryHeaders` from the package exports. See [SECURITY.md](SECURITY.md).
+
+### Retries and POST/PUT
+
+By default, retries after network failures or retryable HTTP statuses run only for **GET**, **HEAD**, **OPTIONS**, and **TRACE**. To retry mutating methods, set `retry: { retryNonIdempotentMethods: true }` (per client or per request).
+
+### Optional URL guard (server-side)
+
+For URLs influenced by untrusted input, call `assertSafeHttpUrl(url)` before requesting. It blocks literal private/loopback IPs for `http:`/`https:`; it does not fix DNS rebinding — see [SECURITY.md](SECURITY.md).
+
+### Errors and logging
+
+`OpenFetchError.toShape()` omits `config.auth` but may still include **response `data` and `headers`**. For client-facing or shared logs, use `toShape({ includeResponseData: false, includeResponseHeaders: false })`. The error instance itself can still hold full `config`; do not expose it raw.
+
 ## Documentation
 
 - [Project flow and file map](docs/PROJECT_FLOW.md)

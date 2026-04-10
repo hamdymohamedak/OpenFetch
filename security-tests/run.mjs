@@ -17,6 +17,9 @@ const {
   isOpenFetchError,
   MemoryCacheStore,
   createCacheMiddleware,
+  createRetryMiddleware,
+  assertSafeHttpUrl,
+  OpenFetchError,
 } = await import(path.join(dist, "index.js"));
 
 let passed = 0;
@@ -71,6 +74,30 @@ async function main() {
   });
 
   await check(
+    "mergeConfig removes dangerous keys from merged retry and memoryCache",
+    async () => {
+      const malicious = JSON.parse(
+        '{"retry":{"maxAttempts":2,"__proto__":{"polluted":true}},"memoryCache":{"ttlMs":1,"constructor":{"x":1}}}'
+      );
+      const r = mergeConfig({}, malicious);
+      assert.equal(r.retry?.maxAttempts, 2);
+      assert.equal(
+        Object.prototype.hasOwnProperty.call(r.retry ?? {}, "__proto__"),
+        false
+      );
+      assert.equal(
+        Object.prototype.hasOwnProperty.call(r.retry ?? {}, "constructor"),
+        false
+      );
+      assert.equal(r.memoryCache?.ttlMs, 1);
+      assert.equal(
+        Object.prototype.hasOwnProperty.call(r.memoryCache ?? {}, "constructor"),
+        false
+      );
+    }
+  );
+
+  await check(
     "fetch rejects newline in header values (injection hardening)",
     async () => {
       const client = createClient({ baseURL: "http://127.0.0.1:9" });
@@ -106,6 +133,42 @@ async function main() {
     }
   });
 
+  await check(
+    "memory cache varyHeaderNames separates entries by Authorization",
+    async () => {
+      const store = new MemoryCacheStore({ maxEntries: 10 });
+      let hits = 0;
+      const server = http.createServer((_req, res) => {
+        hits++;
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end("{}");
+      });
+      await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const { port } = server.address();
+      try {
+        const cached = createClient({
+          baseURL: `http://127.0.0.1:${port}`,
+          middlewares: [
+            createCacheMiddleware(store, {
+              ttlMs: 60_000,
+              varyHeaderNames: ["authorization"],
+            }),
+          ],
+        });
+        await cached.get("/same-path", {
+          headers: { Authorization: "Bearer a" },
+        });
+        await cached.get("/same-path", {
+          headers: { Authorization: "Bearer b" },
+        });
+        assert.equal(hits, 2);
+      } finally {
+        server.close();
+        await new Promise((r) => server.once("close", r));
+      }
+    }
+  );
+
   await check("memory cache does not re-hit origin for identical GET", async () => {
     const store = new MemoryCacheStore({ maxEntries: 10 });
     let hits = 0;
@@ -130,6 +193,87 @@ async function main() {
       await new Promise((r) => server.once("close", r));
     }
   });
+
+  await check("assertSafeHttpUrl blocks loopback IPv4 literal", async () => {
+    assert.throws(() => assertSafeHttpUrl("http://127.0.0.1/foo"), /openfetch/);
+  });
+
+  await check("assertSafeHttpUrl allows public https URL", async () => {
+    assertSafeHttpUrl("https://example.com/path");
+  });
+
+  await check(
+    "retry does not repeat POST on retryable HTTP status by default",
+    async () => {
+      let hits = 0;
+      const server = http.createServer((_req, res) => {
+        hits++;
+        res.writeHead(503);
+        res.end();
+      });
+      await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const { port } = server.address();
+      try {
+        const client = createClient({
+          baseURL: `http://127.0.0.1:${port}`,
+          middlewares: [createRetryMiddleware({ maxAttempts: 5 })],
+        });
+        await assert.rejects(() => client.post("/x", {}));
+        assert.equal(hits, 1);
+      } finally {
+        server.close();
+        await new Promise((r) => server.once("close", r));
+      }
+    }
+  );
+
+  await check(
+    "retry repeats GET on retryable HTTP status up to maxAttempts",
+    async () => {
+      let hits = 0;
+      const server = http.createServer((_req, res) => {
+        hits++;
+        res.writeHead(503);
+        res.end();
+      });
+      await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const { port } = server.address();
+      try {
+        const client = createClient({
+          baseURL: `http://127.0.0.1:${port}`,
+          middlewares: [createRetryMiddleware({ maxAttempts: 5 })],
+        });
+        await assert.rejects(() => client.get("/x"));
+        assert.equal(hits, 5);
+      } finally {
+        server.close();
+        await new Promise((r) => server.once("close", r));
+      }
+    }
+  );
+
+  await check(
+    "OpenFetchError.toShape can omit response data and headers",
+    async () => {
+      const cfg = { url: "http://127.0.0.1/x", method: "GET" };
+      const err = new OpenFetchError("bad", {
+        config: cfg,
+        response: {
+          data: { token: "LEAK" },
+          status: 400,
+          statusText: "Bad Request",
+          headers: { "x-token": "SECRET_HEADER" },
+          config: cfg,
+        },
+      });
+      const s1 = JSON.stringify(err.toShape({ includeResponseData: false }));
+      assert.equal(s1.includes("LEAK"), false);
+      const s2 = JSON.stringify(
+        err.toShape({ includeResponseHeaders: false })
+      );
+      assert.equal(s2.includes("SECRET_HEADER"), false);
+    }
+  );
 
   await check("buildURL stays fast on long paths (ReDoS sanity)", async () => {
     const longPath = "/api/" + "a".repeat(50_000);

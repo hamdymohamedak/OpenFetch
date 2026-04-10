@@ -52,6 +52,11 @@ export type CacheMiddlewareOptions = {
   methods?: string[];
   /** Custom key; default `METHOD fullUrl`. */
   key?: (input: { request: OpenFetchConfig; url: string }) => string;
+  /**
+   * Header names (case-insensitive) to fold into the cache key after the default or custom `key`.
+   * Use for authenticated or personalized GETs, e.g. `["authorization", "cookie"]`, so entries do not leak across users.
+   */
+  varyHeaderNames?: string[];
 };
 
 function shallowCloneResponse(r: OpenFetchResponse): OpenFetchResponse {
@@ -61,6 +66,26 @@ function shallowCloneResponse(r: OpenFetchResponse): OpenFetchResponse {
     config: { ...r.config },
     data: r.data,
   };
+}
+
+/** Append a stable suffix from header values so cache keys differ per auth/cookie (etc.). */
+export function appendCacheKeyVaryHeaders(
+  baseKey: string,
+  headers: Record<string, string> | undefined,
+  headerNames: string[]
+): string {
+  if (!headerNames.length) return baseKey;
+  const lowerToValue = new Map<string, string>();
+  if (headers) {
+    for (const [k, v] of Object.entries(headers)) {
+      lowerToValue.set(k.toLowerCase(), v);
+    }
+  }
+  const parts = headerNames.map((name) => {
+    const v = lowerToValue.get(name.toLowerCase());
+    return `${name.toLowerCase()}:${v ?? ""}`;
+  });
+  return `${baseKey}\u001f${parts.join("\u001f")}`;
 }
 
 function revalidateInBackground(
@@ -100,6 +125,7 @@ function revalidateInBackground(
 /**
  * In-memory cache with TTL and optional stale-while-revalidate (background `dispatch`).
  * Skips when `memoryCache.skip` is true. Uses `memoryCache.ttlMs` / `staleWhileRevalidateMs` per request when set.
+ * For per-user or authenticated responses, set `varyHeaderNames` (e.g. `["authorization","cookie"]`) or a custom `key`.
  */
 export function createCacheMiddleware(
   store: MemoryCacheStore,
@@ -107,6 +133,7 @@ export function createCacheMiddleware(
 ): Middleware {
   const defaultTtl = options?.ttlMs ?? 60_000;
   const defaultSwr = options?.staleWhileRevalidateMs ?? 0;
+  const varyHeaderNames = options?.varyHeaderNames ?? [];
   const methods = new Set(
     (options?.methods ?? ["GET", "HEAD"]).map((m) => m.toUpperCase())
   );
@@ -125,9 +152,14 @@ export function createCacheMiddleware(
     }
 
     const urlString = buildURL(ctx.request.url as string | URL, ctx.request);
-    const key =
+    const rawKey =
       options?.key?.({ request: ctx.request, url: urlString }) ??
       `${method} ${urlString}`;
+    const key = appendCacheKeyVaryHeaders(
+      rawKey,
+      ctx.request.headers,
+      varyHeaderNames
+    );
 
     const ttlMs = ctx.request.memoryCache?.ttlMs ?? defaultTtl;
     const swrMs = ctx.request.memoryCache?.staleWhileRevalidateMs ?? defaultSwr;

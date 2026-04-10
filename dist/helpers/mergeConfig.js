@@ -42,5 +42,11 @@ export function mergeConfig(globalConfig, localConfig) {
     };
     stripPollution(merged);
     stripPollution(merged.headers);
+    if (merged.retry) {
+        stripPollution(merged.retry);
+    }
+    if (merged.memoryCache) {
+        stripPollution(merged.memoryCache);
+    }
     return merged;
 }

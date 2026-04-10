@@ -7,18 +7,24 @@ export default openFetch;
 export { createClient, create };
 
 export { OpenFetchError, isOpenFetchError } from "./core/error.js";
-export type { OpenFetchErrorShape } from "./core/error.js";
+export type {
+  OpenFetchErrorShape,
+  OpenFetchErrorToShapeOptions,
+} from "./core/error.js";
 export { InterceptorManager } from "./core/interceptors.js";
 export {
   createRetryMiddleware,
 } from "./core/retry.js";
 export {
   MemoryCacheStore,
+  appendCacheKeyVaryHeaders,
   createCacheMiddleware,
   type CacheMiddlewareOptions,
   type MemoryCacheEntry,
   type MemoryCacheStoreOptions,
 } from "./core/cache.js";
+
+export { assertSafeHttpUrl } from "./helpers/assertSafeHttpUrl.js";
 
 export type {
   Middleware,

@@ -18,26 +18,45 @@ function resolveRetryOptions(ctx, factoryDefaults) {
         factor: r.factor ?? 2,
         retryOnStatus: r.retryOnStatus ?? DEFAULT_RETRY_ON_STATUS,
         retryOnNetworkError: r.retryOnNetworkError ?? true,
+        retryNonIdempotentMethods: r.retryNonIdempotentMethods ?? false,
         shouldRetry: r.shouldRetry,
     };
 }
-async function builtinShouldRetry(err, ro) {
+/** Methods safe to retry on ambiguous failure without opt-in. */
+function isSafeRetryMethod(method) {
+    const m = (method ?? "GET").toUpperCase();
+    return m === "GET" || m === "HEAD" || m === "OPTIONS" || m === "TRACE";
+}
+function allowRetryForRequest(ro, request) {
+    if (ro.retryNonIdempotentMethods)
+        return true;
+    return isSafeRetryMethod(request.method);
+}
+async function builtinShouldRetry(err, ro, request) {
     if (err instanceof OpenFetchError) {
         if (err.code === "ERR_CANCELED")
             return false;
         if (err.code === "ERR_BAD_RESPONSE" && err.response) {
-            return ro.retryOnStatus.includes(err.response.status);
+            if (!ro.retryOnStatus.includes(err.response.status))
+                return false;
+            return allowRetryForRequest(ro, err.config ?? request);
         }
         if (err.code === "ERR_NETWORK" || err.code === "ERR_PARSE") {
-            return ro.retryOnNetworkError;
+            if (!ro.retryOnNetworkError)
+                return false;
+            return allowRetryForRequest(ro, err.config ?? request);
         }
         return false;
     }
-    return ro.retryOnNetworkError;
+    if (!ro.retryOnNetworkError)
+        return false;
+    return allowRetryForRequest(ro, request);
 }
 /**
  * Middleware: re-invokes `next()` on retryable failures with exponential backoff.
  * Honors merged `ctx.request.retry` (defaults + per-request).
+ * By default, retries after network/parse failures or configured HTTP statuses only for GET, HEAD, OPTIONS, and TRACE.
+ * Set `retry.retryNonIdempotentMethods: true` (client defaults or per request) to retry POST/PUT/PATCH/DELETE as well.
  */
 export function createRetryMiddleware(factoryDefaults) {
     return async (ctx, next) => {
@@ -54,7 +73,7 @@ export function createRetryMiddleware(factoryDefaults) {
                     ctx.error = err;
                     throw err;
                 }
-                const baseOk = await builtinShouldRetry(err, ro);
+                const baseOk = await builtinShouldRetry(err, ro, ctx.request);
                 const customOk = ro.shouldRetry != null ? await ro.shouldRetry(err, attempt) : true;
                 if (!baseOk || !customOk) {
                     ctx.error = err;

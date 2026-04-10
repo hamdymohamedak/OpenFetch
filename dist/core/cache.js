@@ -33,6 +33,22 @@ function shallowCloneResponse(r) {
         data: r.data,
     };
 }
+/** Append a stable suffix from header values so cache keys differ per auth/cookie (etc.). */
+export function appendCacheKeyVaryHeaders(baseKey, headers, headerNames) {
+    if (!headerNames.length)
+        return baseKey;
+    const lowerToValue = new Map();
+    if (headers) {
+        for (const [k, v] of Object.entries(headers)) {
+            lowerToValue.set(k.toLowerCase(), v);
+        }
+    }
+    const parts = headerNames.map((name) => {
+        const v = lowerToValue.get(name.toLowerCase());
+        return `${name.toLowerCase()}:${v ?? ""}`;
+    });
+    return `${baseKey}\u001f${parts.join("\u001f")}`;
+}
 function revalidateInBackground(key, store, request, ttlMs, swrMs, inflight) {
     if (inflight.has(key))
         return;
@@ -63,10 +79,12 @@ function revalidateInBackground(key, store, request, ttlMs, swrMs, inflight) {
 /**
  * In-memory cache with TTL and optional stale-while-revalidate (background `dispatch`).
  * Skips when `memoryCache.skip` is true. Uses `memoryCache.ttlMs` / `staleWhileRevalidateMs` per request when set.
+ * For per-user or authenticated responses, set `varyHeaderNames` (e.g. `["authorization","cookie"]`) or a custom `key`.
  */
 export function createCacheMiddleware(store, options) {
     const defaultTtl = options?.ttlMs ?? 60_000;
     const defaultSwr = options?.staleWhileRevalidateMs ?? 0;
+    const varyHeaderNames = options?.varyHeaderNames ?? [];
     const methods = new Set((options?.methods ?? ["GET", "HEAD"]).map((m) => m.toUpperCase()));
     const inflight = new Map();
     return async (ctx, next) => {
@@ -80,8 +98,9 @@ export function createCacheMiddleware(store, options) {
             return;
         }
         const urlString = buildURL(ctx.request.url, ctx.request);
-        const key = options?.key?.({ request: ctx.request, url: urlString }) ??
+        const rawKey = options?.key?.({ request: ctx.request, url: urlString }) ??
             `${method} ${urlString}`;
+        const key = appendCacheKeyVaryHeaders(rawKey, ctx.request.headers, varyHeaderNames);
         const ttlMs = ctx.request.memoryCache?.ttlMs ?? defaultTtl;
         const swrMs = ctx.request.memoryCache?.staleWhileRevalidateMs ?? defaultSwr;
         const now = Date.now();

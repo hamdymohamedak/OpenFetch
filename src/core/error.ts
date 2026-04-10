@@ -14,6 +14,20 @@ export type OpenFetchErrorShape = {
   code?: string;
 };
 
+/** Options for {@link OpenFetchError.toShape}. */
+export type OpenFetchErrorToShapeOptions = {
+  /**
+   * When false, omits `data` (response body on error responses). Prefer false for client-facing or shared logs.
+   * Default true (backward compatible).
+   */
+  includeResponseData?: boolean;
+  /**
+   * When false, omits `headers`. Prefer false when responses may carry tokens or cookies.
+   * Default true (backward compatible).
+   */
+  includeResponseHeaders?: boolean;
+};
+
 function resolveUrl(config?: OpenFetchConfig): string {
   if (config?.url === undefined || config.url === "") return "";
   try {
@@ -46,22 +60,29 @@ export class OpenFetchError<T = unknown> extends Error {
     if (options?.request !== undefined) this.request = options.request;
   }
 
-  /** Plain object: `message`, `status`, `url`, `method`, `data`, `headers`, `code`. */
-  toShape(): OpenFetchErrorShape {
+  /**
+   * Plain object: `message`, `status`, `url`, `method`, optional `data` / `headers`, `code`.
+   * Omits `config.auth`; the live `OpenFetchError` instance may still hold secrets — do not expose it raw to clients.
+   * Use `includeResponseData: false` and `includeResponseHeaders: false` when serializing for untrusted parties.
+   */
+  toShape(options?: OpenFetchErrorToShapeOptions): OpenFetchErrorShape {
     const url =
       this.request?.url ??
       resolveUrl(this.config) ??
       "";
     const method = (this.config?.method ?? "GET").toUpperCase();
-    return {
+    const includeData = options?.includeResponseData !== false;
+    const includeHeaders = options?.includeResponseHeaders !== false;
+    const shape: OpenFetchErrorShape = {
       message: this.message,
       status: this.response?.status,
       url,
       method,
-      data: this.response?.data,
-      headers: this.response?.headers,
       code: this.code,
     };
+    if (includeData) shape.data = this.response?.data;
+    if (includeHeaders) shape.headers = this.response?.headers;
+    return shape;
   }
 
   toJSON(): OpenFetchErrorShape {

@@ -11,6 +11,19 @@ export type OpenFetchErrorShape = {
     headers?: Record<string, string>;
     code?: string;
 };
+/** Options for {@link OpenFetchError.toShape}. */
+export type OpenFetchErrorToShapeOptions = {
+    /**
+     * When false, omits `data` (response body on error responses). Prefer false for client-facing or shared logs.
+     * Default true (backward compatible).
+     */
+    includeResponseData?: boolean;
+    /**
+     * When false, omits `headers`. Prefer false when responses may carry tokens or cookies.
+     * Default true (backward compatible).
+     */
+    includeResponseHeaders?: boolean;
+};
 export declare class OpenFetchError<T = unknown> extends Error {
     config?: OpenFetchConfig;
     code?: string;
@@ -26,8 +39,12 @@ export declare class OpenFetchError<T = unknown> extends Error {
             url: string;
         };
     });
-    /** Plain object: `message`, `status`, `url`, `method`, `data`, `headers`, `code`. */
-    toShape(): OpenFetchErrorShape;
+    /**
+     * Plain object: `message`, `status`, `url`, `method`, optional `data` / `headers`, `code`.
+     * Omits `config.auth`; the live `OpenFetchError` instance may still hold secrets — do not expose it raw to clients.
+     * Use `includeResponseData: false` and `includeResponseHeaders: false` when serializing for untrusted parties.
+     */
+    toShape(options?: OpenFetchErrorToShapeOptions): OpenFetchErrorShape;
     toJSON(): OpenFetchErrorShape;
 }
 export declare function isOpenFetchError(err: unknown): err is OpenFetchError;

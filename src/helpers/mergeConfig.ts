@@ -62,6 +62,12 @@ export function mergeConfig(
 
   stripPollution(merged as unknown as Record<string, unknown>);
   stripPollution(merged.headers as unknown as Record<string, unknown>);
+  if (merged.retry) {
+    stripPollution(merged.retry as unknown as Record<string, unknown>);
+  }
+  if (merged.memoryCache) {
+    stripPollution(merged.memoryCache as unknown as Record<string, unknown>);
+  }
 
   return merged;
 }

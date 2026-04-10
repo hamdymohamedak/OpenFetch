@@ -16,4 +16,4 @@ This file demonstrates the **minimum** useful body after frontmatter.
 
 ## Optional reference
 
-See [extra notes](./references/extra-notes.md) (create this file if you need it).
+See [extra notes](./references/extra-notes.md).

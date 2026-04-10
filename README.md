@@ -84,7 +84,7 @@ For URLs influenced by untrusted input, call `assertSafeHttpUrl(url)` before req
 
 - Multilingual docs (VitePress): [openfetch-js.github.io/openfetch-docs/](https://openfetch-js.github.io/openfetch-docs/)
 - **Claude Code marketplace:** [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) — add with `claude plugin marketplace add openfetch-js/OpenFetch`, then `claude plugin install openfetch@openfetch-js`. Plugin bundle: [`openfetchskill/`](openfetchskill/README.md).
-- **Skill template / structure example:** [`example/`](example/README.md) — minimal `SKILL.md`, `plugin.json`, and folder layout to copy for new skills.
+- **Skill structure template:** [`examples/claude-skill/`](examples/claude-skill/README.md) — minimal `SKILL.md` + `plugin.json` layout; see [`examples/README.md`](examples/README.md).
 - [Project flow and file map](docs/PROJECT_FLOW.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)

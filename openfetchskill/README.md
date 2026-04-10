@@ -2,6 +2,8 @@
 
 This folder is the **published plugin** for `@hamdymohamedak/openfetch`. Claude Code copies the whole directory into its plugin cache, so the skill and references must live **inside** this tree (not outside).
 
+The **library** (types, runtime, `package.json`) is the **repository root** — [`package.json`](../package.json), [`src/`](../src/), [`README.md`](../README.md).
+
 ## Layout
 
 ```text
@@ -27,6 +29,8 @@ Use `hamdymohamedak/OpenFetch` if that is your fork.
 
 ## Authoring
 
-To change behavior, edit **`skills/openfetch/SKILL.md`** (and files under `references/`). Keep the frontmatter `name` aligned with the skill folder name when possible.
+Edit **`skills/openfetch/SKILL.md`** (and `references/`). Keep frontmatter **`name`** aligned with the skill folder name.
 
-For a **blank template** of this layout, see the sibling folder **[`example/`](../example/)**.
+## Structure reference (template)
+
+To generate a **new** skill with the same folder pattern, copy from **[`examples/claude-skill/`](../examples/claude-skill/README.md)** (see also [`examples/README.md`](../examples/README.md)).

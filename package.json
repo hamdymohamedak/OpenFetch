@@ -1,6 +1,6 @@
 {
   "name": "@hamdymohamedak/openfetch",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Fetch-only HTTP client with interceptors, middleware, retry, memory cache, and server-component-friendly design.",
   "type": "module",
   "sideEffects": false,
@@ -37,6 +37,14 @@
     "universal"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openfetch-js/OpenFetch.git"
+  },
+  "homepage": "https://openfetch-js.github.io/openfetch-docs/",
+  "bugs": {
+    "url": "https://github.com/openfetch-js/OpenFetch/issues"
+  },
   "devDependencies": {
     "typescript": "^5.7.0"
   }

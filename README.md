@@ -82,6 +82,8 @@ For URLs influenced by untrusted input, call `assertSafeHttpUrl(url)` before req
 
 ## Documentation
 
+- Multilingual docs (VitePress): [openfetch-js.github.io/openfetch-docs/](https://openfetch-js.github.io/openfetch-docs/)
+- **AI agents ([skills.sh](https://skills.sh)):** skill lives in [`openfetch/SKILL.md`](openfetch/SKILL.md). After pushing this repo to GitHub, others can install with `npx skills add openfetch-js/OpenFetch` (or your fork).
 - [Project flow and file map](docs/PROJECT_FLOW.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)

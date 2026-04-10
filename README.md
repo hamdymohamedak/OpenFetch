@@ -83,8 +83,8 @@ For URLs influenced by untrusted input, call `assertSafeHttpUrl(url)` before req
 ## Documentation
 
 - Multilingual docs (VitePress): [openfetch-js.github.io/openfetch-docs/](https://openfetch-js.github.io/openfetch-docs/)
-- **Claude Code marketplace:** [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) — add with `claude plugin marketplace add openfetch-js/OpenFetch`, then `claude plugin install openfetch@openfetch-js`. See [`openfetch/README.md`](openfetch/README.md).
-- **Other agent CLIs ([skills.sh](https://skills.sh)):** skill files live under [`plugins/openfetch/skills/openfetch/`](plugins/openfetch/skills/openfetch/SKILL.md); use `npx skills add …` per that tool’s path rules.
+- **Claude Code marketplace:** [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) — add with `claude plugin marketplace add openfetch-js/OpenFetch`, then `claude plugin install openfetch@openfetch-js`. Plugin bundle: [`openfetchskill/`](openfetchskill/README.md).
+- **Skill template / structure example:** [`example/`](example/README.md) — minimal `SKILL.md`, `plugin.json`, and folder layout to copy for new skills.
 - [Project flow and file map](docs/PROJECT_FLOW.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)

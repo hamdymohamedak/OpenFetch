@@ -89,5 +89,5 @@ export function createClient(initialDefaults = {}) {
     };
     return client;
 }
-/** Alias for {@link createClient} (Axios-like naming). */
+/** Alias for {@link createClient}. */
 export const create = createClient;

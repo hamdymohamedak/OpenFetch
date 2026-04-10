@@ -1,18 +1,18 @@
 # Project flow and file map
 
-This document explains how **openfetch** handles a single HTTP call, which files participate, and how data moves between layers.
+This document explains how **@hamdymohamedak/openfetch** handles a single HTTP call, which files participate, and how data moves between layers.
 
 ## Directory layout
 
 ```
-openfetch/
+openFetch/
 ├── src/
 │   ├── index.ts              # Public entry: default instance, re-exports
 │   ├── types/index.ts        # Shared TypeScript types
 │   ├── core/
 │   │   ├── client.ts         # createClient, HTTP verb helpers, orchestration
 │   │   ├── dispatch.ts       # fetch adapter: URL, body, timeout, parse, validateStatus
-│   │   ├── middleware.ts     # Koa-style stack executor
+│   │   ├── middleware.ts     # Middleware stack executor
 │   │   ├── interceptors.ts   # Request/response interceptor managers
 │   │   ├── error.ts          # OpenFetchError, toShape / toJSON
 │   │   ├── retry.ts          # createRetryMiddleware
@@ -62,7 +62,7 @@ flowchart TD
 | `client.ts` | Wires merge → interceptors → middleware → dispatch → response interceptors; defines `use()` and HTTP shortcuts. |
 | `mergeConfig.ts` | Merges plain fields, `headers`, `middlewares`, transform arrays, `retry`, `memoryCache`. |
 | `middleware.ts` | Executes the middleware array with a single shared `ctx` and composable `next`. |
-| `interceptors.ts` | Axios-compatible ordering: request chain runs last-registered first; response chain runs first-registered first. |
+| `interceptors.ts` | Request chain runs last-registered first; response chain runs first-registered first. |
 | `dispatch.ts` | Single place that calls `fetch`; owns timeout via `AbortController`, body serialization rules, and response parsing. |
 | `error.ts` | Normalized errors with optional `response` and `config`; `toShape()` for logging. |
 | `retry.ts` | Middleware that catches retryable failures and re-enters `next()` with backoff. |

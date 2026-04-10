@@ -58,7 +58,7 @@ async function builtinShouldRetry(
 }
 
 /**
- * Koa-style middleware: re-invokes `next()` on retryable failures with exponential backoff.
+ * Middleware: re-invokes `next()` on retryable failures with exponential backoff.
  * Honors merged `ctx.request.retry` (defaults + per-request).
  */
 export function createRetryMiddleware(

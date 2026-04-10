@@ -3,7 +3,7 @@ export type InterceptorHandler<V> = {
     rejected?: (error: unknown) => unknown;
 };
 /**
- * Axios-compatible interceptor stacks: request runs last-registered first;
+ * Interceptor stacks: request runs last-registered first;
  * response runs first-registered first.
  */
 export declare class InterceptorManager<V> {

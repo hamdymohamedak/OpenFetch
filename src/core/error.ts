@@ -2,8 +2,7 @@ import { buildURL } from "../helpers/buildURL.js";
 import type { OpenFetchConfig, OpenFetchResponse } from "../types/index.js";
 
 /**
- * Serializable error shape (similar to Axios debugging payloads).
- * Safe to log or return from API routes.
+ * Serializable error shape for logging or structured API responses.
  */
 export type OpenFetchErrorShape = {
   message: string;

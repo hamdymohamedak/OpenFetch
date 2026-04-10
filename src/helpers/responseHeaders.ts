@@ -1,4 +1,4 @@
-/** Lowercase keys, like Axios normalized headers object. */
+/** Lowercase keys for consistent header lookup. */
 export function headersToRecord(headers: Headers): Record<string, string> {
   const out: Record<string, string> = {};
   headers.forEach((value, key) => {

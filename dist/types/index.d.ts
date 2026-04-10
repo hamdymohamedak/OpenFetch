@@ -32,7 +32,7 @@ export type OpenFetchConfig = {
     baseURL?: string;
     method?: string;
     headers?: Record<string, string>;
-    /** Axios-style body; merged into fetch `body` after transforms. */
+    /** Request payload; merged into fetch `body` after transforms. */
     data?: unknown;
     body?: BodyInit | null;
     params?: Record<string, unknown>;
@@ -56,7 +56,7 @@ export type OpenFetchConfig = {
     memoryCache?: OpenFetchMemoryCacheRequestOptions;
     /**
      * When true, `get`/`post`/… return `response.data` only (ergonomic for RSC).
-     * Default false — full Axios-like `OpenFetchResponse`.
+     * Default false — return full `OpenFetchResponse`.
      */
     unwrapResponse?: boolean;
 } & Partial<Pick<RequestInit, "cache" | "credentials" | "integrity" | "keepalive" | "mode" | "redirect" | "referrer" | "referrerPolicy">>;
@@ -92,7 +92,7 @@ export type OpenFetchClient = {
     delete: <T = unknown>(url: string | URL, config?: OpenFetchConfig) => Promise<OpenFetchResponse<T> | T>;
     head: <T = unknown>(url: string | URL, config?: OpenFetchConfig) => Promise<OpenFetchResponse<T> | T>;
     options: <T = unknown>(url: string | URL, config?: OpenFetchConfig) => Promise<OpenFetchResponse<T> | T>;
-    /** Koa-style middleware (runs around the fetch adapter after request interceptors). */
+    /** Register middleware (runs around the fetch adapter after request interceptors). */
     use: (fn: Middleware) => void;
 };
 //# sourceMappingURL=index.d.ts.map

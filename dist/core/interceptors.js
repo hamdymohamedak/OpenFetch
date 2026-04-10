@@ -1,5 +1,5 @@
 /**
- * Axios-compatible interceptor stacks: request runs last-registered first;
+ * Interceptor stacks: request runs last-registered first;
  * response runs first-registered first.
  */
 export class InterceptorManager {

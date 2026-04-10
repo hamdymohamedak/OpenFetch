@@ -1,13 +1,13 @@
-# Contributing to openfetch
+# Contributing to @hamdymohamedak/openfetch
 
 Thank you for taking the time to improve this project. The following guidelines keep reviews predictable and the package stable across runtimes.
 
 ## Ground rules
 
-1. **Stay on `fetch`.** Do not add XMLHttpRequest, node-fetch as a required dependency, or polyfills that assume a browser.
+1. **Stay on `fetch`.** Do not add XMLHttpRequest, alternate fetch shims as required dependencies, or polyfills that assume a browser.
 2. **Avoid browser-only globals.** Do not reference `window`, `document`, `localStorage`, `sessionStorage`, `WebSocket`, or `EventSource` in library code.
 3. **Keep the public API small.** Prefer new behavior as optional middleware or clearly documented config rather than breaking existing callers.
-4. **TypeScript source of truth.** All implementation lives under `src/`; `dist/` is generated output.
+4. **TypeScript source of truth.** All implementation lives under `src/`; `dist/` is compiled output from `npm run build`.
 
 ## How to contribute
 
@@ -54,6 +54,19 @@ There is no bundled test runner yet; `tsc` is the required gate. If you add test
 ## Publishing
 
 Publishing to npm is reserved for maintainers after version bump and changelog review. Consumers should install from the registry or from a tagged release, not from unreviewed branches.
+
+npm **requires two-factor authentication** (or a granular access token with publish rights) for `npm publish`. Logging in with the browser (`npm login`) is not enough by itself.
+
+1. On [npmjs.com](https://www.npmjs.com/) go to **Account → Two-Factor Authentication** and enable **Authorization and writes** (authenticator app recommended).
+2. From the package root:
+
+```bash
+npm publish --access public --otp=123456
+```
+
+Use the current 6-digit code from your authenticator app. Do not commit or share OTPs.
+
+**Alternative:** create a **Granular Access Token** at npm with permission to publish this package (and “bypass 2FA” only if your org policy allows it), then configure npm to use that token for `registry.npmjs.org`.
 
 ## Code of conduct
 

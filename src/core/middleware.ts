@@ -8,12 +8,8 @@ export async function applyMiddlewares(
 ): Promise<void> {
   const stack = ctx.request.middlewares ?? [];
 
-  let index = -1;
   async function run(i: number): Promise<void> {
-    if (i <= index) return;
-    index = i;
-
-    const fn: Middleware | undefined = stack[i] ?? next;
+    const fn = (stack[i] ?? next) as Middleware | (() => Promise<void>);
     if (!fn) return;
 
     try {

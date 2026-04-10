@@ -44,7 +44,8 @@ export function createClient(initialDefaults = {}) {
             const cfg = ctx.request;
             ctx.response = await dispatch(cfg);
         });
-        if (ctx.error)
+        // Stale ctx.error can remain from an earlier failed `next()` inside retry middleware; prefer a successful response.
+        if (ctx.error != null && ctx.response == null)
             throw ctx.error;
         let response = ctx.response;
         response = (await responseInterceptors.runResponse(response));

@@ -59,9 +59,9 @@ flowchart TD
 
 | File | Responsibility |
 |------|----------------|
-| `client.ts` | Wires merge → interceptors → middleware → dispatch → response interceptors; defines `use()` and HTTP shortcuts. |
+| `client.ts` | Wires merge → interceptors → middleware → dispatch → response interceptors; defines `use()` and HTTP shortcuts. After middleware, propagates `ctx.error` only when `ctx.response` is still null so retry middleware can recover from earlier failures. |
 | `mergeConfig.ts` | Merges plain fields, `headers`, `middlewares`, transform arrays, `retry`, `memoryCache`. |
-| `middleware.ts` | Executes the middleware array with a single shared `ctx` and composable `next`. |
+| `middleware.ts` | Executes the middleware array with a single shared `ctx` and composable `next`. Each `next()` invocation may run the terminal `fetch` again (for example retries). |
 | `interceptors.ts` | Request chain runs last-registered first; response chain runs first-registered first. |
 | `dispatch.ts` | Single place that calls `fetch`; owns timeout via `AbortController`, body serialization rules, and response parsing. |
 | `error.ts` | Normalized errors with optional `response` and `config`; `toShape()` for logging. |

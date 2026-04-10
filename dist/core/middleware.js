@@ -1,11 +1,7 @@
 export async function applyMiddlewares(ctx, next) {
     const stack = ctx.request.middlewares ?? [];
-    let index = -1;
     async function run(i) {
-        if (i <= index)
-            return;
-        index = i;
-        const fn = stack[i] ?? next;
+        const fn = (stack[i] ?? next);
         if (!fn)
             return;
         try {

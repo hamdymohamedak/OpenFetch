@@ -47,9 +47,10 @@ Maintainers may request tests, naming tweaks, or doc updates. Keeping changes sc
 ```bash
 npm install
 npm run build
+npm run test:security
 ```
 
-There is no bundled test runner yet; `tsc` is the required gate. If you add tests later (for example Node’s native test runner), document the command in this file and in `package.json`.
+`npm run test:security` runs the checks under `security-tests/`. `tsc` remains the compile gate for every change.
 
 ## Publishing
 

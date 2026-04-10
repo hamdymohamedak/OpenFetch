@@ -29,8 +29,10 @@ openFetch/
 │       └── responseHeaders.ts
 ├── dist/                     # Compiled output (from `npm run build`)
 ├── examples/                 # Copy-paste samples (not published logic)
+├── security-tests/         # `npm run test:security`
 ├── README.md
 ├── CONTRIBUTING.md
+├── SECURITY.md
 └── docs/PROJECT_FLOW.md      # This file
 ```
 

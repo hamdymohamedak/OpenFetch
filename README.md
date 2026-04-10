@@ -59,6 +59,9 @@ const users = await api.get("/v1/users");
 
 - [Project flow and file map](docs/PROJECT_FLOW.md)
 - [Contributing](CONTRIBUTING.md)
+- [Security](SECURITY.md)
+
+Run `npm run test:security` after building to execute bundled security checks.
 
 ## Requirements
 

@@ -4,6 +4,16 @@ import type {
   OpenFetchRetryOptions,
 } from "../types/index.js";
 
+/** Keys that must never be copied from user config (prototype pollution). */
+const DANGEROUS_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+function stripPollution(record: Record<string, unknown> | undefined): void {
+  if (!record) return;
+  for (const k of DANGEROUS_KEYS) {
+    delete record[k];
+  }
+}
+
 function mergeRetry(
   a: OpenFetchRetryOptions | undefined,
   b: OpenFetchRetryOptions | undefined
@@ -24,7 +34,7 @@ export function mergeConfig(
   globalConfig: OpenFetchConfig,
   localConfig: OpenFetchConfig
 ): OpenFetchConfig {
-  return {
+  const merged: OpenFetchConfig = {
     ...globalConfig,
     ...localConfig,
     headers: {
@@ -49,4 +59,9 @@ export function mergeConfig(
       localConfig.memoryCache
     ),
   };
+
+  stripPollution(merged as unknown as Record<string, unknown>);
+  stripPollution(merged.headers as unknown as Record<string, unknown>);
+
+  return merged;
 }

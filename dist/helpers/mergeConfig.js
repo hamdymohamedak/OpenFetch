@@ -1,3 +1,12 @@
+/** Keys that must never be copied from user config (prototype pollution). */
+const DANGEROUS_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+function stripPollution(record) {
+    if (!record)
+        return;
+    for (const k of DANGEROUS_KEYS) {
+        delete record[k];
+    }
+}
 function mergeRetry(a, b) {
     if (!a && !b)
         return undefined;
@@ -9,7 +18,7 @@ function mergeMemoryCache(a, b) {
     return { ...a, ...b };
 }
 export function mergeConfig(globalConfig, localConfig) {
-    return {
+    const merged = {
         ...globalConfig,
         ...localConfig,
         headers: {
@@ -31,4 +40,7 @@ export function mergeConfig(globalConfig, localConfig) {
         retry: mergeRetry(globalConfig.retry, localConfig.retry),
         memoryCache: mergeMemoryCache(globalConfig.memoryCache, localConfig.memoryCache),
     };
+    stripPollution(merged);
+    stripPollution(merged.headers);
+    return merged;
 }

@@ -1,6 +1,6 @@
 {
   "name": "@hamdymohamedak/openfetch",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Fetch-only HTTP client with interceptors, middleware, retry, memory cache, and server-component-friendly design.",
   "type": "module",
   "sideEffects": false,
@@ -16,11 +16,14 @@
     "dist",
     "README.md",
     "CONTRIBUTING.md",
-    "docs"
+    "SECURITY.md",
+    "docs",
+    "security-tests"
   ],
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test:security": "npm run build && node security-tests/run.mjs"
   },
   "engines": {
     "node": ">=18.0.0"

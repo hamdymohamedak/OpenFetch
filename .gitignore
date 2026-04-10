@@ -1,24 +1,24 @@
-frontEnd/openfetch/node_modules
-frontEnd/openfetch/dist
-frontEnd/openfetch/build
-frontEnd/openfetch/coverage
-frontEnd/openfetch/dist
-frontEnd/openfetch/build
-frontEnd/openfetch/coverage
-frontEnd/openfetch/dist
-frontEnd/openfetch/build
-frontEnd/openfetch/coverage
-openf
-openFetch/dist
-openFetch/build
-openFetch/coverage
-openFetch/dist
-openFetch/build
-openFetch/coverage
-openFetch/dist
-openFetch/build
-openFetch/coverage
-openfetchDocs/node_modules
-openfetchDocs/.vitepress/cache
-openfetchDocs/.vitepress/dist
-openfetchskill/node_modules
+# Dependencies
+**/node_modules/
+
+# Test / tooling output
+**/coverage/
+**/build/
+
+# Vite app (frontEnd)
+frontEnd/openfetch/dist/
+
+# VitePress docs site (openFetchDocs)
+openFetchDocs/.vitepress/cache/
+openFetchDocs/.vitepress/dist/
+
+# Logs, OS, secrets
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+
+.idea/
+
+*.tsbuildinfo

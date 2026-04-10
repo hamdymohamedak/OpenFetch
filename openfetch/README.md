@@ -1,15 +1,33 @@
-# openfetch — agent skill
+# openfetch — agent skill (paths)
 
-This directory is an **[agent skill](https://skills.sh)** for `@hamdymohamedak/openfetch`: see **`SKILL.md`** (YAML frontmatter + instructions).
+The **canonical** skill files for Claude Code live under the plugin bundle (required so the plugin cache can copy all assets):
 
-## Install (CLI)
+- **`plugins/openfetch/skills/openfetch/SKILL.md`**
+- **`plugins/openfetch/skills/openfetch/references/quick-reference.md`**
 
-After this repository is public on GitHub:
+## Claude Code marketplace
 
-```bash
-npx skills add openfetch-js/OpenFetch
+This repo includes **`.claude-plugin/marketplace.json`**. After cloning/pulling from GitHub:
+
+```text
+/plugin marketplace add openfetch-js/OpenFetch
 ```
 
-Use your fork/org if different: `npx skills add YOUR_USER/OpenFetch`.
+(or `hamdymohamedak/OpenFetch` if you use that fork)
 
-If your client expects the skill at repository root, symlink or copy `openfetch/SKILL.md` per that tool’s docs.
+Then install the plugin:
+
+```text
+/plugin install openfetch@openfetch-js
+```
+
+CLI equivalents (see [Claude Code plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces)):
+
+```bash
+claude plugin marketplace add openfetch-js/OpenFetch
+claude plugin install openfetch@openfetch-js
+```
+
+## skills.sh / other CLIs
+
+Tools that expect `SKILL.md` at a fixed path may need the path `plugins/openfetch/skills/openfetch/` or a copy of that folder; check your tool’s docs.

@@ -6,6 +6,24 @@ export default openFetch;
 
 export { createClient, create };
 
+export { createFluentClient } from "./sugar/fluent.js";
+export type { FluentOpenFetchClient, RequestChain } from "./sugar/fluent.js";
+
+export {
+  retry,
+  timeout,
+  hooks,
+  debug,
+  strictFetch,
+} from "./plugins/index.js";
+export type {
+  RetryPluginOptions,
+  HooksPluginOptions,
+  DebugPluginOptions,
+  DebugLogPayload,
+  DebugPhase,
+} from "./plugins/index.js";
+
 export { OpenFetchError, isOpenFetchError } from "./core/error.js";
 export type {
   OpenFetchErrorShape,
@@ -25,6 +43,17 @@ export {
 } from "./core/cache.js";
 
 export { assertSafeHttpUrl } from "./helpers/assertSafeHttpUrl.js";
+export {
+  generateIdempotencyKey,
+  hasIdempotencyKeyHeader,
+  ensureIdempotencyKeyHeader,
+} from "./helpers/idempotencyKey.js";
+export {
+  maskHeaderValues,
+  type MaskHeaderStrategy,
+  type MaskHeaderOptions,
+} from "./helpers/maskHeaders.js";
+export { cloneResponse } from "./helpers/cloneResponse.js";
 
 export type {
   Middleware,

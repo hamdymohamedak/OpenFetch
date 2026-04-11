@@ -86,6 +86,7 @@ export function createClient(initialDefaults = {}) {
             if (!defaults.middlewares)
                 defaults.middlewares = [];
             defaults.middlewares.push(fn);
+            return client;
         },
     };
     return client;

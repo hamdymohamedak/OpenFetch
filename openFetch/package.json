@@ -1,6 +1,6 @@
 {
   "name": "@hamdymohamedak/openfetch",
-  "version": "0.2.3",
+  "version": "0.3.3",
   "description": "Fetch-only HTTP client with interceptors, middleware, retry, memory cache, and server-component-friendly design.",
   "type": "module",
   "sideEffects": false,
@@ -10,6 +10,14 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./plugins": {
+      "types": "./dist/plugins/index.d.ts",
+      "import": "./dist/plugins/index.js"
+    },
+    "./sugar": {
+      "types": "./dist/sugar/fluent.d.ts",
+      "import": "./dist/sugar/fluent.js"
     }
   },
   "files": [
@@ -23,7 +31,8 @@
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "test:security": "npm run build && node security-tests/run.mjs"
+    "test:security": "npm run build && node security-tests/run.mjs",
+    "test": "npm run build && node --test test/*.test.mjs"
   },
   "engines": {
     "node": ">=18.0.0"

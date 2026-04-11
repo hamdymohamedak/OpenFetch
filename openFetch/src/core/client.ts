@@ -113,6 +113,7 @@ export function createClient(initialDefaults: OpenFetchConfig = {}): OpenFetchCl
     use(fn) {
       if (!defaults.middlewares) defaults.middlewares = [];
       defaults.middlewares.push(fn);
+      return client;
     },
   };
 

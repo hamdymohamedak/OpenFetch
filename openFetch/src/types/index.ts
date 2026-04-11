@@ -29,8 +29,33 @@ export type OpenFetchRetryOptions = {
    * Default false: only GET, HEAD, OPTIONS, and TRACE are retried for those cases to avoid duplicate side effects.
    */
   retryNonIdempotentMethods?: boolean;
+  /**
+   * When true (default), POST requests that use retry with `retryNonIdempotentMethods` and `maxAttempts > 1`
+   * get a stable `Idempotency-Key` header (if not already set) so retries share the same key (e.g. Stripe-style APIs).
+   * Set false to manage the header yourself.
+   */
+  autoIdempotencyKey?: boolean;
   /** Optional custom gate (runs after built-in rules). */
   shouldRetry?: (error: unknown, attempt: number) => boolean | Promise<boolean>;
+  /**
+   * Budget for the whole retry sequence (first attempt through backoff), in ms, measured with a **monotonic**
+   * clock (`performance.now()` when available) so elapsed time is stable if the system clock jumps.
+   * When `enforceTotalTimeout` is true (default), the budget is also merged into `signal` per attempt so an
+   * in-flight `fetch` aborts at expiry (user abort still wins). Set `enforceTotalTimeout: false` to only enforce
+   * the budget between attempts (a slow in-flight request may exceed it). On expiry throws `OpenFetchError`
+   * with code `ERR_RETRY_TIMEOUT`.
+   */
+  timeoutTotalMs?: number;
+  /**
+   * When `timeoutTotalMs` is set: if true (default), each attempt merges a deadline `AbortSignal` so the
+   * current `fetch` is aborted when the total budget is exhausted. If false, checks run only between attempts.
+   */
+  enforceTotalTimeout?: boolean;
+  /**
+   * If set, overrides `request.timeout` for each attempt inside this retry middleware (per-attempt `fetch` timeout).
+   * Unset leaves `timeout` from merged request config (or the `timeout()` plugin).
+   */
+  timeoutPerAttemptMs?: number;
 };
 
 /** Per-request overrides for the memory cache middleware. */
@@ -52,11 +77,20 @@ export type OpenFetchConfig = {
   params?: Record<string, unknown>;
   paramsSerializer?: (params: Record<string, unknown>) => string;
   signal?: AbortSignal | null;
+  /** Per-request `fetch` timeout (ms); each retry attempt uses a fresh timer in `dispatch`. */
   timeout?: number;
   /** Maps to `credentials: 'include'` when true unless `credentials` is set. */
   withCredentials?: boolean;
   auth?: { username: string; password: string };
   responseType?: "arraybuffer" | "blob" | "json" | "text" | "stream";
+  /**
+   * When true, the native `Response` is returned as `data` without reading the body (for `.json()` / `.text()` etc.).
+   * The dispatch-layer **body parse** and **`transformResponse` chain are skipped** (escape hatch). Client
+   * **response interceptors** still run and receive `OpenFetchResponse` whose `data` is that `Response`.
+   * Middleware that assumes parsed or transformed `ctx.response.data` will not see those transforms—use
+   * `.send()` / normal terminals, or read and parse the `Response` yourself (see `cloneResponse`).
+   */
+  rawResponse?: boolean;
   validateStatus?: (status: number) => boolean;
   transformRequest?: TransformRequest[];
   transformResponse?: TransformResponse[];
@@ -146,6 +180,6 @@ export type OpenFetchClient = {
     url: string | URL,
     config?: OpenFetchConfig
   ) => Promise<OpenFetchResponse<T> | T>;
-  /** Register middleware (runs around the fetch adapter after request interceptors). */
-  use: (fn: Middleware) => void;
+  /** Register middleware (runs around the fetch adapter after request interceptors). Returns the same client for chaining. */
+  use: (fn: Middleware) => OpenFetchClient;
 };

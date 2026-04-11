@@ -97,6 +97,25 @@ export async function dispatch(config) {
             referrer: config.referrer,
             referrerPolicy: config.referrerPolicy,
         });
+        const headerRecord = headersToRecord(res.headers);
+        if (config.rawResponse === true) {
+            const openResponse = {
+                data: res,
+                status: res.status,
+                statusText: res.statusText,
+                headers: headerRecord,
+                config,
+            };
+            if (!validateStatus(res.status)) {
+                throw new OpenFetchError(`Request failed with status ${res.status}`, {
+                    config,
+                    code: "ERR_BAD_RESPONSE",
+                    response: openResponse,
+                    request: { url: urlString },
+                });
+            }
+            return openResponse;
+        }
         let parsed;
         try {
             parsed = await parseBody(res, config.responseType);
@@ -108,7 +127,6 @@ export async function dispatch(config) {
                 request: { url: urlString },
             });
         }
-        const headerRecord = headersToRecord(res.headers);
         const openResponse = {
             data: parsed,
             status: res.status,
@@ -156,7 +174,9 @@ export async function dispatch(config) {
         });
     }
     finally {
-        if (timeoutId !== undefined)
+        // Clear per-attempt timer so it cannot fire after completion (avoids dangling timers / leaks).
+        if (timeoutId !== undefined) {
             clearTimeout(timeoutId);
+        }
     }
 }

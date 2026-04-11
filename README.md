@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./docs/openfetch-logo.jpg" alt="openFetch official logo" width="200" />
+  <img src="./docs/openfetch-logo.jpg" alt="openFetch official logo" width="400" />
 </p>
 
 # @hamdymohamedak/openfetch

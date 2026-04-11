@@ -1,6 +1,6 @@
 {
   "name": "@hamdymohamedak/openfetch",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "Fetch-only HTTP client with interceptors, middleware, retry, memory cache, and server-component-friendly design.",
   "type": "module",
   "sideEffects": false,
@@ -23,6 +23,7 @@
   "files": [
     "dist",
     "README.md",
+    "CHANGELOG.md",
     "CONTRIBUTING.md",
     "SECURITY.md",
     "docs",

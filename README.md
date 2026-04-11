@@ -41,6 +41,6 @@ npm run dev
 
 - [Package on npm](https://www.npmjs.com/package/@hamdymohamedak/openfetch)
 - [Documentation (hosted)](https://openfetch-js.github.io/openfetch-docs/)
-- [Repository](https://github.com/openfetch-js/OpenFetch)
+- [OpenFetch package README](openFetch/README.md) — full API, plugins, fluent client, and execution model.
 
 Requires **Node.js ≥ 18** for the library build.

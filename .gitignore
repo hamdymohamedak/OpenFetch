@@ -1,6 +1,9 @@
 # Dependencies
 **/node_modules/
 
+# Local-only harness (upstream package layout)
+local-playground/
+
 # Test / tooling output
 **/coverage/
 **/build/

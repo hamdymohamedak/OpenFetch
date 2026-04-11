@@ -1,0 +1,11 @@
+{
+  "name": "openfetch",
+  "description": "Agent skill for @hamdymohamedak/openfetch — fetch-only HTTP client (interceptors, middleware, retry, memory cache, RSC-friendly).",
+  "version": "0.2.3",
+  "author": {
+    "name": "openfetch-js"
+  },
+  "homepage": "https://openfetch-js.github.io/openfetch-docs/",
+  "repository": "https://github.com/openfetch-js/OpenFetch",
+  "license": "MIT"
+}

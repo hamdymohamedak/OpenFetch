@@ -1,57 +1,53 @@
-# Contributing to @hamdymohamedak/openfetch
+# Contributing on GitHub
 
-Thank you for taking the time to improve this project. The following guidelines keep reviews predictable and the package stable across runtimes.
+This document describes how to participate in **@hamdymohamedak/openfetch** through GitHub: issues, discussions, and pull requests.
 
-## Ground rules
+## What we look for in changes
+
+These rules keep reviews predictable and the library safe across runtimes:
 
 1. **Stay on `fetch`.** Do not add XMLHttpRequest, alternate fetch shims as required dependencies, or polyfills that assume a browser.
 2. **Avoid browser-only globals.** Do not reference `window`, `document`, `localStorage`, `sessionStorage`, `WebSocket`, or `EventSource` in library code.
 3. **Keep the public API small.** Prefer new behavior as optional middleware or clearly documented config rather than breaking existing callers.
-4. **TypeScript source of truth.** All implementation lives under `src/`; `dist/` is compiled output from `npm run build`.
+4. **TypeScript source of truth.** Implementation lives under `src/`; `dist/` is build output from `npm run build`.
 
-## How to contribute
+## Reporting issues
 
-### Reporting issues
-
-Open an issue with:
+[Open an issue](https://github.com/openfetch-js/OpenFetch/issues) on this repository with:
 
 - Runtime and version (Node, Bun, Deno, worker, browser).
 - Minimal code sample and expected vs actual behavior.
 - If relevant, the target URL shape (without secrets).
 
-### Suggesting features
+## Suggesting features
 
-Describe the use case and whether it can live in userland (middleware) vs core. Large features should be discussed in an issue before a heavy pull request.
+Open an issue first. Describe the use case and whether it can live in userland (middleware) vs core. Large features should be agreed in an issue before a large pull request.
 
-### Pull requests
+## Pull requests
 
-#### Branch naming
+### Branch naming
 
-Use **one branch per concern**: a single feature **or** a single bug fix, not unrelated changes in the same branch.
+Use **one branch per concern**: one feature **or** one bug fix, not unrelated changes together.
 
-- **Features:** `features/<short-description>` — for example `features/add-retry`, `features/cache-key-override`.
-- **Bug fixes:** `bugs/<short-description>` — for example `bugs/timeout-signal`, `bugs/cache-key-collision`.
+- **Features:** `features/<short-description>` — e.g. `features/add-retry`, `features/cache-key-override`.
+- **Bug fixes:** `bugs/<short-description>` — e.g. `bugs/timeout-signal`, `bugs/cache-key-collision`.
 
 Use **kebab-case** after the prefix. Keep the slug short but specific enough that reviewers can tell what the branch is for.
 
-1. **Fork** the repository and create a branch from `main` following the [branch naming](#branch-naming) rules above.
-2. **Implement** your change in `src/`. Match existing formatting and naming.
-3. **Build** locally: `npm run build` (must pass with no TypeScript errors).
+### Workflow
+
+1. **Fork** this repository and create a branch from `main` using the [branch naming](#branch-naming) rules above.
+2. **Implement** in `src/`. Match existing formatting and naming.
+3. **Build** locally: `npm run build` (no TypeScript errors).
 4. **Document** user-visible behavior in `README.md` and, if structural, in `docs/PROJECT_FLOW.md`.
-5. **Open a PR** into `main` with:
+5. **Open a pull request** into `main` with:
    - A clear title and description.
-   - What changed and why (motivation).
+   - What changed and why.
    - Any breaking changes called out explicitly.
 
-### Commit messages
+### Before you push
 
-Use short, imperative subjects (for example `Add cache key override option`). Optional body for context. Consistent history helps maintainers and consumers.
-
-### Code review
-
-Maintainers may request tests, naming tweaks, or doc updates. Keeping changes scoped to one concern per PR speeds up merge.
-
-## Local development
+From a clone of your fork:
 
 ```bash
 npm install
@@ -59,24 +55,15 @@ npm run build
 npm run test:security
 ```
 
-`npm run test:security` runs the checks under `security-tests/`. `tsc` remains the compile gate for every change.
+`npm run test:security` runs `security-tests/`. The TypeScript compile step is the gate for every change.
 
-## Publishing
+### Commit messages
 
-Publishing to npm is reserved for maintainers after version bump and changelog review. Consumers should install from the registry or from a tagged release, not from unreviewed branches.
+Use short, imperative subjects (e.g. `Add cache key override option`). Add a body when extra context helps reviewers reading the PR on GitHub.
 
-npm **requires two-factor authentication** (or a granular access token with publish rights) for `npm publish`. Logging in with the browser (`npm login`) is not enough by itself.
+### Code review
 
-1. On [npmjs.com](https://www.npmjs.com/) go to **Account → Two-Factor Authentication** and enable **Authorization and writes** (authenticator app recommended).
-2. From the package root:
-
-```bash
-npm publish --access public --otp=123456
-```
-
-Use the current 6-digit code from your authenticator app. Do not commit or share OTPs.
-
-**Alternative:** create a **Granular Access Token** at npm with permission to publish this package (and “bypass 2FA” only if your org policy allows it), then configure npm to use that token for `registry.npmjs.org`.
+Maintainers may ask for tests, naming tweaks, or doc updates on the PR. Smaller, single-concern PRs are easier to review and merge.
 
 ## Code of conduct
 

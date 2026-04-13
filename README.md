@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="./docs/openfetch-logo.jpg" alt="openFetch official logo" width="200" />
+  <img
+    src="https://cdn.jsdelivr.net/npm/@hamdymohamedak/openfetch@latest/docs/openfetch-logo.jpg"
+    alt="openFetch official logo"
+    width="400"
+  />
 </p>
 
 # @hamdymohamedak/openfetch

@@ -10,7 +10,7 @@
 
 A small, dependency-free HTTP client for JavaScript runtimes that expose the standard [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) API. It supports instances with defaults, request and response interceptors, HTTP verb helpers, optional request/response transforms, composable middleware, retries, and in-memory caching—without legacy browser-only globals.
 
-**Design goals**
+**What you get**
 
 - One transport: `fetch` only (Node 18+, Bun, Deno, Cloudflare Workers, browsers).
 - No polyfills required for supported environments.
@@ -20,15 +20,6 @@ A small, dependency-free HTTP client for JavaScript runtimes that expose the sta
 
 ```bash
 npm install @hamdymohamedak/openfetch
-```
-
-Scoped packages are published with `npm publish --access public` the first time. Replace `hamdymohamedak` with your npm username if it differs from GitHub.
-
-Build from a clone:
-
-```bash
-npm install
-npm run build
 ```
 
 ## Quick start
@@ -142,14 +133,10 @@ For URLs influenced by untrusted input, call `assertSafeHttpUrl(url)` before req
 
 ## Documentation
 
-- Multilingual docs (VitePress): [openfetch-js.github.io/openfetch-docs/](https://openfetch-js.github.io/openfetch-docs/)
-- **Claude Code marketplace:** [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) — add with `claude plugin marketplace add openfetch-js/OpenFetch`, then `claude plugin install openfetch@openfetch-js`. Plugin bundle: [`openfetchskill/`](openfetchskill/README.md).
-- **Skill structure template:** [`examples/claude-skill/`](examples/claude-skill/README.md) — minimal `SKILL.md` + `plugin.json` layout; see [`examples/README.md`](examples/README.md).
-- [Project flow and file map](docs/PROJECT_FLOW.md)
-- [Contributing](CONTRIBUTING.md)
-- [Security](SECURITY.md)
-
-Run `npm run test:security` after building to execute bundled security checks.
+- **Guide (VitePress):** [openfetch-js.github.io/openfetch-docs/](https://openfetch-js.github.io/openfetch-docs/)
+- **Security:** [SECURITY.md](SECURITY.md)
+- **Claude Code:** add the marketplace with `claude plugin marketplace add openfetch-js/OpenFetch`, then `claude plugin install openfetch@openfetch-js` (see the plugin bundle in [`openfetchskill/`](openfetchskill/README.md)).
+- **Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Requirements
 

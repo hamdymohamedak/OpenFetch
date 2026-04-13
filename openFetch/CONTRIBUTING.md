@@ -25,7 +25,16 @@ Describe the use case and whether it can live in userland (middleware) vs core. 
 
 ### Pull requests
 
-1. **Fork** the repository and create a branch from `main` (for example `fix/timeout-signal` or `feat/cache-key`).
+#### Branch naming
+
+Use **one branch per concern**: a single feature **or** a single bug fix, not unrelated changes in the same branch.
+
+- **Features:** `features/<short-description>` — for example `features/add-retry`, `features/cache-key-override`.
+- **Bug fixes:** `bugs/<short-description>` — for example `bugs/timeout-signal`, `bugs/cache-key-collision`.
+
+Use **kebab-case** after the prefix. Keep the slug short but specific enough that reviewers can tell what the branch is for.
+
+1. **Fork** the repository and create a branch from `main` following the [branch naming](#branch-naming) rules above.
 2. **Implement** your change in `src/`. Match existing formatting and naming.
 3. **Build** locally: `npm run build` (must pass with no TypeScript errors).
 4. **Document** user-visible behavior in `README.md` and, if structural, in `docs/PROJECT_FLOW.md`.

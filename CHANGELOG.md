@@ -4,7 +4,24 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0] - 2026-04-11
+## About OpenFetch
+
+**OpenFetch** (`@hamdymohamedak/openfetch`) is a small, **dependency-free** HTTP client for any JavaScript runtime that provides the standard [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) API (Node 18+, Bun, Deno, Cloudflare Workers, browsers). It focuses on a single transport layer, **no legacy browser-only globals** (`window`, `document`, `localStorage`), so it stays **SSR- and React Server Component–friendly**.
+
+**Core surface:** default export and `createClient()` / `create()` instances with `baseURL`, query `params`, `headers`, `timeout`, `signal`, body helpers, `responseType`, `validateStatus`, request/response **interceptors**, and async **middleware** wrapping the fetch adapter.
+
+**Built-in capabilities:** `OpenFetchError` with structured shapes, **`createRetryMiddleware()`** (backoff, total/per-attempt timeouts, idempotency key helpers for retried POSTs), **`MemoryCacheStore`** and **`createCacheMiddleware()`** (TTL, optional stale-while-revalidate).
+
+**Optional entry points (tree-shaking):**
+
+- `@hamdymohamedak/openfetch/plugins` — `retry()`, `timeout()`, `hooks()`, `debug()` (e.g. masked headers in logs), `strictFetch()`.
+- `@hamdymohamedak/openfetch/sugar` — **`createFluentClient()`**: URL + method chaining (`.get()`, `.post()`, …), terminals like `.json()`, `.text()`, `.send()`, **`.raw()`** (native `Response` without adapter body parsing on that path), and **`.memo()`** (one HTTP round-trip; body buffered once for multiple terminals—not HTTP cache).
+
+For a feature matrix, examples, and execution order (middleware vs retry vs interceptors), see the [README](https://github.com/openfetch-js/OpenFetch/blob/main/README.md).
+
+---
+
+## [0.2.8] - 2026-04-14
 
 ### Added
 

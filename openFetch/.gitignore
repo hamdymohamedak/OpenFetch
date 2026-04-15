@@ -1,9 +1,0 @@
-# Local-only harness; not committed (install parent package with file:..)
-local-playground/
-
-.venv/
-node_modules/
-*.log
-.DS_Store
-.env
-.env.*

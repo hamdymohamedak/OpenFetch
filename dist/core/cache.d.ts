@@ -34,6 +34,13 @@ export type CacheMiddlewareOptions = {
      * Use for authenticated or personalized GETs, e.g. `["authorization", "cookie"]`, so entries do not leak across users.
      */
     varyHeaderNames?: string[];
+    /**
+     * When false (default), the first cached GET/HEAD that includes `Authorization` or `Cookie`
+     * without `varyHeaderNames` or a custom `key` triggers a one-time `console.warn` about
+     * possible cross-user cache leakage. Set true if you intentionally cache anonymous responses
+     * only or use another isolation mechanism.
+     */
+    suppressAuthCacheKeyWarning?: boolean;
 };
 /** Append a stable suffix from header values so cache keys differ per auth/cookie (etc.). */
 export declare function appendCacheKeyVaryHeaders(baseKey: string, headers: Record<string, string> | undefined, headerNames: string[]): string;

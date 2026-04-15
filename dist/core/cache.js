@@ -33,6 +33,16 @@ function shallowCloneResponse(r) {
         data: r.data,
     };
 }
+function headersHaveAuthOrCookie(headers) {
+    if (!headers)
+        return false;
+    for (const k of Object.keys(headers)) {
+        const l = k.toLowerCase();
+        if (l === "authorization" || l === "cookie")
+            return true;
+    }
+    return false;
+}
 /** Append a stable suffix from header values so cache keys differ per auth/cookie (etc.). */
 export function appendCacheKeyVaryHeaders(baseKey, headers, headerNames) {
     if (!headerNames.length)
@@ -87,6 +97,7 @@ export function createCacheMiddleware(store, options) {
     const varyHeaderNames = options?.varyHeaderNames ?? [];
     const methods = new Set((options?.methods ?? ["GET", "HEAD"]).map((m) => m.toUpperCase()));
     const inflight = new Map();
+    let authCacheKeyWarningIssued = false;
     return async (ctx, next) => {
         if (ctx.request.memoryCache?.skip) {
             await next();
@@ -100,6 +111,16 @@ export function createCacheMiddleware(store, options) {
         const urlString = buildURL(ctx.request.url, ctx.request);
         const rawKey = options?.key?.({ request: ctx.request, url: urlString }) ??
             `${method} ${urlString}`;
+        if (!authCacheKeyWarningIssued &&
+            options?.suppressAuthCacheKeyWarning !== true &&
+            options?.key === undefined &&
+            varyHeaderNames.length === 0 &&
+            headersHaveAuthOrCookie(ctx.request.headers)) {
+            authCacheKeyWarningIssued = true;
+            if (typeof console !== "undefined" && typeof console.warn === "function") {
+                console.warn("[openfetch] createCacheMiddleware: request uses Authorization or Cookie but varyHeaderNames is empty and no custom key is set; cache entries may be shared across users. Use varyHeaderNames: [\"authorization\", \"cookie\"] or options.key, or set suppressAuthCacheKeyWarning: true if this is intentional.");
+            }
+        }
         const key = appendCacheKeyVaryHeaders(rawKey, ctx.request.headers, varyHeaderNames);
         const ttlMs = ctx.request.memoryCache?.ttlMs ?? defaultTtl;
         const swrMs = ctx.request.memoryCache?.staleWhileRevalidateMs ?? defaultSwr;

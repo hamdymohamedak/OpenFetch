@@ -5,10 +5,13 @@ export type RedactUrlQueryOptions = {
     paramNames?: string[];
     /** When false, returns `url` unchanged. Default true. */
     enabled?: boolean;
+    /** Value substituted for sensitive query parameters (default `"[REDACTED]"`). */
+    replacement?: string;
 };
 /**
  * Replaces values of sensitive query parameters for safe logging or serialization.
- * Invalid or non-absolute URLs are returned unchanged.
+ * Supports absolute URLs and common relative forms (`/path?…`, `?only=query`, `api/x?…`).
+ * Strings that are not valid URLs and do not look like path/query requests are returned unchanged.
  */
 export declare function redactSensitiveUrlQuery(url: string, options?: RedactUrlQueryOptions): string;
 //# sourceMappingURL=redactUrlQuery.d.ts.map

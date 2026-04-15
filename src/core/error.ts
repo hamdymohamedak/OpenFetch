@@ -37,6 +37,8 @@ export type OpenFetchErrorToShapeOptions = {
   redactSensitiveUrlQuery?: boolean;
   /** Extra query parameter names to redact (case-insensitive); merged with the built-in list. */
   sensitiveQueryParamNames?: string[];
+  /** Replacement string for redacted query values (default `"[REDACTED]"`). */
+  sensitiveQueryParamReplacement?: string;
 };
 
 function resolveUrl(config?: OpenFetchConfig): string {
@@ -84,6 +86,7 @@ export class OpenFetchError<T = unknown> extends Error {
     const redactOpts: RedactUrlQueryOptions = {
       enabled: options?.redactSensitiveUrlQuery !== false,
       paramNames: options?.sensitiveQueryParamNames,
+      replacement: options?.sensitiveQueryParamReplacement,
     };
     url = redactSensitiveUrlQuery(url, redactOpts);
     const method = (this.config?.method ?? "GET").toUpperCase();

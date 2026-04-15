@@ -28,6 +28,7 @@ export function debug(options = {}) {
     const includeReqH = options.includeRequestHeaders === true;
     const maskUrlQ = options.maskUrlQuery !== false;
     const sensitiveQueryParams = options.sensitiveQueryParamNames;
+    const sensitiveQueryReplacement = options.sensitiveQueryParamReplacement;
     const log = options.log ??
         ((phase, p) => {
             if (typeof console !== "undefined" && console.debug) {
@@ -46,6 +47,7 @@ export function debug(options = {}) {
             ? redactSensitiveUrlQuery(rawUrl, {
                 enabled: true,
                 paramNames: sensitiveQueryParams,
+                replacement: sensitiveQueryReplacement,
             })
             : rawUrl;
         const reqPayload = { method, url };

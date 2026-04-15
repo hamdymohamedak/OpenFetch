@@ -36,6 +36,8 @@ export type DebugPluginOptions = {
     maskUrlQuery?: boolean;
     /** Extra query parameter names to redact in the logged URL (case-insensitive). */
     sensitiveQueryParamNames?: string[];
+    /** Replacement string for redacted query values in the logged URL (default `"[REDACTED]"`). */
+    sensitiveQueryParamReplacement?: string;
 };
 /**
  * Development-oriented logging middleware. Omit from production bundles if unused.

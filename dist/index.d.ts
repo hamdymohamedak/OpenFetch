@@ -14,6 +14,7 @@ export { MemoryCacheStore, appendCacheKeyVaryHeaders, createCacheMiddleware, typ
 export { assertSafeHttpUrl } from "./helpers/assertSafeHttpUrl.js";
 export { generateIdempotencyKey, hasIdempotencyKeyHeader, ensureIdempotencyKeyHeader, } from "./helpers/idempotencyKey.js";
 export { maskHeaderValues, type MaskHeaderStrategy, type MaskHeaderOptions, } from "./helpers/maskHeaders.js";
+export { redactSensitiveUrlQuery, DEFAULT_SENSITIVE_QUERY_PARAM_NAMES, type RedactUrlQueryOptions, } from "./helpers/redactUrlQuery.js";
 export { cloneResponse } from "./helpers/cloneResponse.js";
 export type { Middleware, NextFn, OpenFetchClient, OpenFetchConfig, OpenFetchContext, OpenFetchInterceptors, OpenFetchMemoryCacheRequestOptions, OpenFetchResponse, OpenFetchRetryOptions, RequestConfig, TransformRequest, TransformResponse, } from "./types/index.js";
 //# sourceMappingURL=index.d.ts.map

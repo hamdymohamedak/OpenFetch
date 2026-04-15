@@ -1,4 +1,5 @@
 import { buildURL } from "../helpers/buildURL.js";
+import { redactSensitiveUrlQuery, } from "../helpers/redactUrlQuery.js";
 function resolveUrl(config) {
     if (config?.url === undefined || config.url === "")
         return "";
@@ -32,9 +33,14 @@ export class OpenFetchError extends Error {
      * Use `includeResponseData: false` and `includeResponseHeaders: false` when serializing for untrusted parties.
      */
     toShape(options) {
-        const url = this.request?.url ??
+        let url = this.request?.url ??
             resolveUrl(this.config) ??
             "";
+        const redactOpts = {
+            enabled: options?.redactSensitiveUrlQuery !== false,
+            paramNames: options?.sensitiveQueryParamNames,
+        };
+        url = redactSensitiveUrlQuery(url, redactOpts);
         const method = (this.config?.method ?? "GET").toUpperCase();
         const includeData = options?.includeResponseData !== false;
         const includeHeaders = options?.includeResponseHeaders !== false;

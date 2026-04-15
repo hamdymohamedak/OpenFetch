@@ -1,4 +1,8 @@
 import { buildURL } from "../helpers/buildURL.js";
+import {
+  redactSensitiveUrlQuery,
+  type RedactUrlQueryOptions,
+} from "../helpers/redactUrlQuery.js";
 import type { OpenFetchConfig, OpenFetchResponse } from "../types/index.js";
 
 /**
@@ -26,6 +30,13 @@ export type OpenFetchErrorToShapeOptions = {
    * Default true (backward compatible).
    */
   includeResponseHeaders?: boolean;
+  /**
+   * When true (default), replaces sensitive query parameter values in the serialized `url`
+   * (e.g. `token`, `code`, `api_key`). Set false only for trusted internal diagnostics.
+   */
+  redactSensitiveUrlQuery?: boolean;
+  /** Extra query parameter names to redact (case-insensitive); merged with the built-in list. */
+  sensitiveQueryParamNames?: string[];
 };
 
 function resolveUrl(config?: OpenFetchConfig): string {
@@ -66,10 +77,15 @@ export class OpenFetchError<T = unknown> extends Error {
    * Use `includeResponseData: false` and `includeResponseHeaders: false` when serializing for untrusted parties.
    */
   toShape(options?: OpenFetchErrorToShapeOptions): OpenFetchErrorShape {
-    const url =
+    let url =
       this.request?.url ??
       resolveUrl(this.config) ??
       "";
+    const redactOpts: RedactUrlQueryOptions = {
+      enabled: options?.redactSensitiveUrlQuery !== false,
+      paramNames: options?.sensitiveQueryParamNames,
+    };
+    url = redactSensitiveUrlQuery(url, redactOpts);
     const method = (this.config?.method ?? "GET").toUpperCase();
     const includeData = options?.includeResponseData !== false;
     const includeHeaders = options?.includeResponseHeaders !== false;

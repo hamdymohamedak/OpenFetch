@@ -11,4 +11,5 @@ export { MemoryCacheStore, appendCacheKeyVaryHeaders, createCacheMiddleware, } f
 export { assertSafeHttpUrl } from "./helpers/assertSafeHttpUrl.js";
 export { generateIdempotencyKey, hasIdempotencyKeyHeader, ensureIdempotencyKeyHeader, } from "./helpers/idempotencyKey.js";
 export { maskHeaderValues, } from "./helpers/maskHeaders.js";
+export { redactSensitiveUrlQuery, DEFAULT_SENSITIVE_QUERY_PARAM_NAMES, } from "./helpers/redactUrlQuery.js";
 export { cloneResponse } from "./helpers/cloneResponse.js";

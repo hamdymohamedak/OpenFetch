@@ -557,6 +557,62 @@ async function main() {
   );
 
   await check(
+    "OpenFetchError.toShape redacts sensitive query params in url by default",
+    async () => {
+      const cfg = {
+        url: "http://127.0.0.1/x?token=SECRET&ok=1",
+        method: "GET",
+      };
+      const err = new OpenFetchError("bad", { config: cfg });
+      const shape = err.toShape();
+      assert.equal(shape.url.includes("SECRET"), false);
+      assert.match(shape.url, /REDACTED/);
+      assert.ok(shape.url.includes("ok=1"));
+      const full = err.toShape({ redactSensitiveUrlQuery: false });
+      assert.ok(full.url.includes("SECRET"));
+    }
+  );
+
+  await check(
+    "createCacheMiddleware warns once when auth headers used without varyHeaderNames",
+    async () => {
+      const warnings = [];
+      const orig = console.warn;
+      console.warn = (...args) => {
+        warnings.push(args.join(" "));
+      };
+      const store = new MemoryCacheStore({ maxEntries: 10 });
+      let hits = 0;
+      const server = http.createServer((_req, res) => {
+        hits++;
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end("{}");
+      });
+      await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const { port } = server.address();
+      try {
+        const cached = createClient({
+          baseURL: `http://127.0.0.1:${port}`,
+          middlewares: [createCacheMiddleware(store, { ttlMs: 60_000 })],
+        });
+        await cached.get("/warn-path", {
+          headers: { Authorization: "Bearer a" },
+        });
+        await cached.get("/warn-path", {
+          headers: { Authorization: "Bearer b" },
+        });
+        assert.equal(warnings.length, 1);
+        assert.ok(warnings[0].includes("openfetch"));
+        assert.equal(hits, 1);
+      } finally {
+        console.warn = orig;
+        server.close();
+        await new Promise((r) => server.once("close", r));
+      }
+    }
+  );
+
+  await check(
     "OpenFetchError.toShape can omit response data and headers",
     async () => {
       const cfg = { url: "http://127.0.0.1/x", method: "GET" };

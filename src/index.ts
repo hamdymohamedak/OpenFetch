@@ -53,6 +53,11 @@ export {
   type MaskHeaderStrategy,
   type MaskHeaderOptions,
 } from "./helpers/maskHeaders.js";
+export {
+  redactSensitiveUrlQuery,
+  DEFAULT_SENSITIVE_QUERY_PARAM_NAMES,
+  type RedactUrlQueryOptions,
+} from "./helpers/redactUrlQuery.js";
 export { cloneResponse } from "./helpers/cloneResponse.js";
 
 export type {

@@ -18,10 +18,78 @@ export const DEFAULT_SENSITIVE_QUERY_PARAM_NAMES = [
     "csrf",
     "nonce",
 ];
+const DEFAULT_REDACTION = "[REDACTED]";
 const DEFAULT_SET = new Set(DEFAULT_SENSITIVE_QUERY_PARAM_NAMES.map((n) => n.toLowerCase()));
+function normalizeKey(k) {
+    return k.toLowerCase().replace(/[-_]/g, "");
+}
+function buildPartialFragments(sensitive) {
+    const out = [];
+    for (const s of sensitive) {
+        const n = normalizeKey(s);
+        if (n !== "")
+            out.push(n);
+    }
+    return out;
+}
+const DEFAULT_PARTIAL_FRAGMENTS = buildPartialFragments(DEFAULT_SET);
+/**
+ * Path- or query-shaped strings that are safe to resolve with a dummy base.
+ * Avoids turning arbitrary tokens like `not-a-url` into `http://localhost/not-a-url`.
+ */
+function mayBeRelativeRequestUrl(url) {
+    return (url.startsWith("/") ||
+        url.startsWith("./") ||
+        url.startsWith("../") ||
+        url.startsWith("?") ||
+        url.includes("/") ||
+        url.includes("?"));
+}
+function parseUrlForRedaction(url) {
+    try {
+        const u = new URL(url);
+        return { u, relativeInput: false, queryOnlyInput: false };
+    }
+    catch {
+        if (!mayBeRelativeRequestUrl(url))
+            return null;
+        try {
+            const u = new URL(url, "http://localhost");
+            return {
+                u,
+                relativeInput: true,
+                queryOnlyInput: url.startsWith("?"),
+            };
+        }
+        catch {
+            return null;
+        }
+    }
+}
+function isSensitiveName(nameLower, sensitive, partialFragments) {
+    if (sensitive.has(nameLower))
+        return true;
+    const kn = normalizeKey(nameLower);
+    if (kn === "")
+        return false;
+    for (const frag of partialFragments) {
+        if (frag !== "" && kn.includes(frag))
+            return true;
+    }
+    return false;
+}
+function serializeAfterRedaction(parsed) {
+    const { u, relativeInput, queryOnlyInput } = parsed;
+    if (!relativeInput)
+        return u.toString();
+    if (queryOnlyInput)
+        return `${u.search}${u.hash}`;
+    return `${u.pathname}${u.search}${u.hash}`;
+}
 /**
  * Replaces values of sensitive query parameters for safe logging or serialization.
- * Invalid or non-absolute URLs are returned unchanged.
+ * Supports absolute URLs and common relative forms (`/path?…`, `?only=query`, `api/x?…`).
+ * Strings that are not valid URLs and do not look like path/query requests are returned unchanged.
  */
 export function redactSensitiveUrlQuery(url, options) {
     if (options?.enabled === false || url === "")
@@ -29,29 +97,33 @@ export function redactSensitiveUrlQuery(url, options) {
     const extra = options?.paramNames ?? [];
     const sensitive = extra.length === 0
         ? DEFAULT_SET
-        : new Set([
-            ...DEFAULT_SET,
-            ...extra.map((n) => n.toLowerCase()),
-        ]);
-    try {
-        const u = new URL(url);
-        if (u.search === "")
-            return url;
-        const params = u.searchParams;
-        let changed = false;
-        const names = new Set();
-        params.forEach((_v, name) => {
-            names.add(name);
-        });
-        for (const name of names) {
-            if (sensitive.has(name.toLowerCase())) {
-                params.set(name, "[REDACTED]");
-                changed = true;
-            }
-        }
-        return changed ? u.toString() : url;
-    }
-    catch {
+        : new Set([...DEFAULT_SET, ...extra.map((n) => n.toLowerCase())]);
+    const partialFragments = extra.length === 0
+        ? DEFAULT_PARTIAL_FRAGMENTS
+        : buildPartialFragments(sensitive);
+    const replacement = options?.replacement ?? DEFAULT_REDACTION;
+    const parsed = parseUrlForRedaction(url);
+    if (parsed === null)
         return url;
+    const { u } = parsed;
+    if (u.search === "")
+        return url;
+    const params = u.searchParams;
+    let changed = false;
+    const names = new Set();
+    params.forEach((_v, name) => {
+        names.add(name);
+    });
+    for (const name of names) {
+        const lower = name.toLowerCase();
+        if (!isSensitiveName(lower, sensitive, partialFragments))
+            continue;
+        const n = params.getAll(name).length;
+        params.delete(name);
+        for (let i = 0; i < n; i++) {
+            params.append(name, replacement);
+        }
+        changed = true;
     }
+    return changed ? serializeAfterRedaction(parsed) : url;
 }

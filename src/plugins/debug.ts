@@ -44,6 +44,8 @@ export type DebugPluginOptions = {
   maskUrlQuery?: boolean;
   /** Extra query parameter names to redact in the logged URL (case-insensitive). */
   sensitiveQueryParamNames?: string[];
+  /** Replacement string for redacted query values in the logged URL (default `"[REDACTED]"`). */
+  sensitiveQueryParamReplacement?: string;
 };
 
 function resolveUrl(ctx: OpenFetchContext): string {
@@ -76,6 +78,7 @@ export function debug(options: DebugPluginOptions = {}): Middleware {
   const includeReqH = options.includeRequestHeaders === true;
   const maskUrlQ = options.maskUrlQuery !== false;
   const sensitiveQueryParams = options.sensitiveQueryParamNames;
+  const sensitiveQueryReplacement = options.sensitiveQueryParamReplacement;
   const log =
     options.log ??
     ((phase, p) => {
@@ -96,6 +99,7 @@ export function debug(options: DebugPluginOptions = {}): Middleware {
       ? redactSensitiveUrlQuery(rawUrl, {
           enabled: true,
           paramNames: sensitiveQueryParams,
+          replacement: sensitiveQueryReplacement,
         })
       : rawUrl;
     const reqPayload: DebugLogPayload = { method, url };

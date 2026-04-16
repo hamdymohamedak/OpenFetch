@@ -39,6 +39,7 @@ export class OpenFetchError extends Error {
         const redactOpts = {
             enabled: options?.redactSensitiveUrlQuery !== false,
             paramNames: options?.sensitiveQueryParamNames,
+            replacement: options?.sensitiveQueryParamReplacement,
         };
         url = redactSensitiveUrlQuery(url, redactOpts);
         const method = (this.config?.method ?? "GET").toUpperCase();

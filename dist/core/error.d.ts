@@ -30,6 +30,8 @@ export type OpenFetchErrorToShapeOptions = {
     redactSensitiveUrlQuery?: boolean;
     /** Extra query parameter names to redact (case-insensitive); merged with the built-in list. */
     sensitiveQueryParamNames?: string[];
+    /** Replacement string for redacted query values (default `"[REDACTED]"`). */
+    sensitiveQueryParamReplacement?: string;
 };
 export declare class OpenFetchError<T = unknown> extends Error {
     config?: OpenFetchConfig;

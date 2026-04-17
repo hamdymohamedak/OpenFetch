@@ -125,11 +125,11 @@ For low-level access without consuming the body in openFetch, set `rawResponse: 
 
 ### Optional URL guard (server-side)
 
-For URLs influenced by untrusted input, call `assertSafeHttpUrl(url)` before requesting. It blocks literal private/loopback IPs for `http:`/`https:`; it does not fix DNS rebinding — see [SECURITY.md](SECURITY.md).
+For URLs influenced by untrusted input, either call `assertSafeHttpUrl(url)` before requesting or enable **`assertSafeUrl: true`** on the client (defaults or per request). That blocks literal private/loopback IPs for `http:`/`https:` on the fully resolved URL; it does not fix DNS rebinding — see [SECURITY.md](SECURITY.md).
 
 ### Errors and logging
 
-`OpenFetchError.toShape()` omits `config.auth` and by default **redacts sensitive query parameters** in the `url` field; pass `redactSensitiveUrlQuery: false` only for trusted diagnostics. It may still include **response `data` and `headers`**. For client-facing or shared logs, use `toShape({ includeResponseData: false, includeResponseHeaders: false })`. The error instance itself can still hold full `config`; do not expose it raw.
+`OpenFetchError.toShape()` / `toJSON()` omit `config.auth` and, **by default**, omit response **`data`** and **`headers`**; pass `includeResponseData: true` / `includeResponseHeaders: true` when you need them for trusted diagnostics. By default the serialized `url` **redacts common sensitive query parameters**; pass `redactSensitiveUrlQuery: false` only in trusted environments. The error instance itself can still hold full `config`; do not expose it raw.
 
 ## Documentation
 

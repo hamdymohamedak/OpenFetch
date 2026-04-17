@@ -1,4 +1,4 @@
-import { createClient } from "../core/client.js";
+import { createClient } from "../runtime/client.js";
 function withJsonHint(data, config) {
     const headers = { ...(config.headers ?? {}) };
     const hasCt = Boolean(headers["content-type"]) || Boolean(headers["Content-Type"]);

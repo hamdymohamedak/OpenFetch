@@ -7,7 +7,7 @@ openfetch is a thin `fetch` wrapper. Callers supply URLs, headers, and bodies. T
 - **Axios-class proxy CVEs (e.g. CVE-2025-62718 / `NO_PROXY` normalization)** — openfetch does **not** implement axios-style `HTTP_PROXY` / `HTTPS_PROXY` / `NO_PROXY` matching. Outbound routing follows the host runtime’s `fetch` (and any platform proxy). Those CVEs therefore do **not** map to openfetch code paths; policy still belongs at the app, proxy, or mesh layer.
 
 - **Network trust** — You choose endpoints. Blocking private IPs, metadata hosts, or open redirects is an **application** concern for partially trusted URLs.
-- **Secrets** — `toShape()` on `OpenFetchError` avoids echoing `config.auth`, but the full `Error` object may still carry `config` (including credentials). Response bodies and headers in `toShape()` may still contain tokens or PII; use `toShape({ includeResponseData: false, includeResponseHeaders: false })` when serializing for untrusted clients or broad logs. By default, `toShape()` also **redacts common sensitive query parameters** in the serialized `url` (for example `token`, `code`, `password`); use `redactSensitiveUrlQuery: false` only for trusted diagnostics. The `debug()` plugin applies the same redaction to logged URLs. Never send raw errors to untrusted clients without redaction.
+- **Secrets** — `toShape()` / `toJSON()` on `OpenFetchError` omit `config.auth` and, **by default**, omit response **`data`** and **`headers`** (pass `includeResponseData: true` / `includeResponseHeaders: true` only for trusted diagnostics). The live `Error` instance may still carry full `config` and `response`; never expose it raw to untrusted clients. By default, `toShape()` **redacts common sensitive query parameters** in the serialized `url` (for example `token`, `code`, `password`); use `redactSensitiveUrlQuery: false` only for trusted diagnostics. The `debug()` plugin applies the same redaction to logged URLs.
 - **Supply chain** — Install this package from npm or a verified Git tag; verify integrity with your package manager.
 
 ## Server-side usage and SSRF
@@ -17,24 +17,22 @@ When a URL (or part of it) comes from user input or another untrusted source on 
 Mitigations (combine as appropriate):
 
 - **Allowlist** hostnames or full URL prefixes your backend is allowed to call.
-- **Block literal private IPs** — Use the optional helper `assertSafeHttpUrl(url)` before issuing the request. It rejects `http`/`https` URLs whose host is a loopback, private, link-local, or IPv4-mapped private address. On runtimes that use the WHATWG URL parser (including Node.js), hosts written as **decimal integers**, **hex/octal IPv4 segments**, or **shorthand** forms (for example `127.1`) are **normalized** to dotted-quad literals before `hostname` is read; `assertSafeHttpUrl` still applies its checks to that normalized host. It does **not** stop a public hostname from resolving to an internal IP (DNS rebinding); resolve and validate in a controlled resolver or use an outbound proxy.
+- **Block literal private IPs** — Call `assertSafeHttpUrl(url)` before issuing the request, or set **`assertSafeUrl: true`** on `createClient` / per request so the fully resolved URL is checked automatically inside the dispatcher. The helper rejects `http`/`https` URLs whose host is a loopback, private, link-local, or IPv4-mapped private address. On runtimes that use the WHATWG URL parser (including Node.js), hosts written as **decimal integers**, **hex/octal IPv4 segments**, or **shorthand** forms (for example `127.1`) are **normalized** to dotted-quad literals before `hostname` is read; `assertSafeHttpUrl` still applies its checks to that normalized host. It does **not** stop a public hostname from resolving to an internal IP (DNS rebinding); resolve and validate in a controlled resolver or use an outbound proxy.
 - **Egress controls** — Route outbound HTTP through a proxy or service mesh that enforces policy.
 
 ## Memory cache and multi-tenant / authenticated traffic
 
-`createCacheMiddleware` defaults to a cache key of ``METHOD fullUrl`` (plus optional custom `key`). That key does **not** include `Authorization`, `Cookie`, or other `Vary` inputs unless you add them.
+`createCacheMiddleware` builds a cache key from ``METHOD fullUrl`` (plus optional custom `key`). **By default**, `authorization` and `cookie` request header values are folded into the key (and any extra names you pass in `varyHeaderNames` are merged with those two), so authenticated GETs do not share entries across different credentials.
 
-**Risk:** In a BFF, SSR, or shared worker, the first successful response for a URL can be served to **other** callers until the entry expires — cross-user or cross-tenant data leakage.
+**Risk:** If you set **`varyHeaderNames: []`** explicitly, the key is URL-only; the first successful response for that URL can be served to **other** callers until the entry expires.
 
 **Mitigations:**
 
-- Pass `varyHeaderNames: ["authorization", "cookie"]` (and any other headers your origin varies on), **or**
+- Omit `varyHeaderNames` (secure default), or pass additional header names (they are merged with `authorization` and `cookie`), **or**
 - Provide a custom `key` that incorporates a stable tenant or session identifier, **or**
 - Use `appendCacheKeyVaryHeaders` when building a custom key.
 
-Unauthenticated, fully public GETs may keep the default key.
-
-The middleware emits a **one-time `console.warn`** the first time it sees `Authorization` or `Cookie` on a cacheable request while `varyHeaderNames` is empty and no custom `key` is set. Suppress with `suppressAuthCacheKeyWarning: true` when you know the cache is safe (for example anonymous-only endpoints).
+The middleware emits a **one-time `console.warn`** the first time it sees `Authorization` or `Cookie` while `varyHeaderNames` was explicitly set to `[]` and no custom `key` is set. Suppress with `suppressAuthCacheKeyWarning: true` when that configuration is intentional (for example anonymous-only CDN).
 
 ## Retry and non-idempotent methods
 

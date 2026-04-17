@@ -1,4 +1,4 @@
-import type { Middleware, OpenFetchClient, OpenFetchConfig, OpenFetchResponse } from "../types/index.js";
+import type { Middleware, OpenFetchClient, OpenFetchConfig, OpenFetchResponse } from "../domain/types.js";
 /**
  * Lazy builder: `.get()` / `.post()` only accumulate config. Each **terminal** method (`.json()`, `.text()`,
  * `.send()`, `.raw()`, …) starts **one new** HTTP request — calling two terminals is two requests, not one

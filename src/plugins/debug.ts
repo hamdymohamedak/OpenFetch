@@ -3,6 +3,7 @@ import {
   type MaskHeaderOptions,
   type MaskHeaderStrategy,
 } from "../helpers/maskHeaders.js";
+import { redactSensitiveUrlQuery } from "../helpers/redactUrlQuery.js";
 import type { Middleware, OpenFetchContext } from "../types/index.js";
 
 export type DebugPhase = "request" | "response" | "error";
@@ -36,6 +37,15 @@ export type DebugPluginOptions = {
   maskPartialTailLength?: number;
   /** When true, includes masked request headers on the `request` phase (never raw secrets). */
   includeRequestHeaders?: boolean;
+  /**
+   * When true (default), redacts sensitive query parameter values in logged URLs
+   * (same built-in list as `redactSensitiveUrlQuery` from the main package export).
+   */
+  maskUrlQuery?: boolean;
+  /** Extra query parameter names to redact in the logged URL (case-insensitive). */
+  sensitiveQueryParamNames?: string[];
+  /** Replacement string for redacted query values in the logged URL (default `"[REDACTED]"`). */
+  sensitiveQueryParamReplacement?: string;
 };
 
 function resolveUrl(ctx: OpenFetchContext): string {
@@ -66,6 +76,9 @@ export function debug(options: DebugPluginOptions = {}): Middleware {
         ? { maskNames: maskList }
         : undefined;
   const includeReqH = options.includeRequestHeaders === true;
+  const maskUrlQ = options.maskUrlQuery !== false;
+  const sensitiveQueryParams = options.sensitiveQueryParamNames;
+  const sensitiveQueryReplacement = options.sensitiveQueryParamReplacement;
   const log =
     options.log ??
     ((phase, p) => {
@@ -81,7 +94,14 @@ export function debug(options: DebugPluginOptions = {}): Middleware {
     }
     const t0 = typeof performance !== "undefined" ? performance.now() : Date.now();
     const method = (ctx.request.method ?? "GET").toUpperCase();
-    const url = resolveUrl(ctx);
+    const rawUrl = resolveUrl(ctx);
+    const url = maskUrlQ
+      ? redactSensitiveUrlQuery(rawUrl, {
+          enabled: true,
+          paramNames: sensitiveQueryParams,
+          replacement: sensitiveQueryReplacement,
+        })
+      : rawUrl;
     const reqPayload: DebugLogPayload = { method, url };
     if (includeReqH) {
       const masked = maskHeaderValues(

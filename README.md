@@ -85,7 +85,7 @@ Register **`retry` before `timeout`** so retries wrap the full inner stack. Use 
 
 **Retry timing:** `retry.timeoutTotalMs` measures elapsed time with a monotonic clock (`performance.now()` when available), so the budget is not skewed by system clock changes. By default (`retry.enforceTotalTimeout !== false`), each attempt merges a deadline into the request `signal` so an in-flight `fetch` aborts when the budget runs out (`ERR_RETRY_TIMEOUT`). Set `retry.enforceTotalTimeout: false` to enforce the budget only between attempts. `retry.timeoutPerAttemptMs` sets `timeout` for every attempt inside the retry middleware. Each `dispatch` uses `clearTimeout` in a `finally` block so per-attempt timers are not left dangling.
 
-**Debug:** Default logs omit request headers. Use `debug({ includeRequestHeaders: true, maskHeaders: ["authorization"], maskStrategy: "partial" })` for values like `Bearer ****abcd`, or `maskStrategy: "hash"` for a short fingerprint. **`maskHeaderValues`** supports the same strategies when building your own logs.
+**Debug:** Default logs omit request headers. Logged URLs **redact common sensitive query parameters** (`token`, `code`, `password`, …); set `maskUrlQuery: false` to log raw URLs (avoid in production). Use `debug({ includeRequestHeaders: true, maskHeaders: ["authorization"], maskStrategy: "partial" })` for values like `Bearer ****abcd`, or `maskStrategy: "hash"` for a short fingerprint. **`maskHeaderValues`** supports the same strategies when building your own logs.
 
 ### Execution model
 
@@ -102,7 +102,7 @@ Understanding order helps avoid surprises with retries, timeouts, and escape hat
 
 ### Memory cache and authentication
 
-The default cache key is ``METHOD fullUrl``. For **authenticated or per-user** GETs, also pass header names that affect the response so entries do not leak across users:
+The default cache key is ``METHOD fullUrl``. The first request with **`Authorization` or `Cookie`** and no `varyHeaderNames` / custom `key` triggers a **one-time `console.warn`** (suppress with `suppressAuthCacheKeyWarning: true` if you only cache public data). For **authenticated or per-user** GETs, also pass header names that affect the response so entries do not leak across users:
 
 ```ts
 createCacheMiddleware(store, {
@@ -129,7 +129,7 @@ For URLs influenced by untrusted input, call `assertSafeHttpUrl(url)` before req
 
 ### Errors and logging
 
-`OpenFetchError.toShape()` omits `config.auth` but may still include **response `data` and `headers`**. For client-facing or shared logs, use `toShape({ includeResponseData: false, includeResponseHeaders: false })`. The error instance itself can still hold full `config`; do not expose it raw.
+`OpenFetchError.toShape()` omits `config.auth` and by default **redacts sensitive query parameters** in the `url` field; pass `redactSensitiveUrlQuery: false` only for trusted diagnostics. It may still include **response `data` and `headers`**. For client-facing or shared logs, use `toShape({ includeResponseData: false, includeResponseHeaders: false })`. The error instance itself can still hold full `config`; do not expose it raw.
 
 ## Documentation
 

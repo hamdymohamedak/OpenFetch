@@ -57,6 +57,13 @@ export type CacheMiddlewareOptions = {
    * Use for authenticated or personalized GETs, e.g. `["authorization", "cookie"]`, so entries do not leak across users.
    */
   varyHeaderNames?: string[];
+  /**
+   * When false (default), the first cached GET/HEAD that includes `Authorization` or `Cookie`
+   * without `varyHeaderNames` or a custom `key` triggers a one-time `console.warn` about
+   * possible cross-user cache leakage. Set true if you intentionally cache anonymous responses
+   * only or use another isolation mechanism.
+   */
+  suppressAuthCacheKeyWarning?: boolean;
 };
 
 function shallowCloneResponse(r: OpenFetchResponse): OpenFetchResponse {
@@ -66,6 +73,17 @@ function shallowCloneResponse(r: OpenFetchResponse): OpenFetchResponse {
     config: { ...r.config },
     data: r.data,
   };
+}
+
+function headersHaveAuthOrCookie(
+  headers: Record<string, string> | undefined
+): boolean {
+  if (!headers) return false;
+  for (const k of Object.keys(headers)) {
+    const l = k.toLowerCase();
+    if (l === "authorization" || l === "cookie") return true;
+  }
+  return false;
 }
 
 /** Append a stable suffix from header values so cache keys differ per auth/cookie (etc.). */
@@ -138,6 +156,7 @@ export function createCacheMiddleware(
     (options?.methods ?? ["GET", "HEAD"]).map((m) => m.toUpperCase())
   );
   const inflight = new Map<string, Promise<void>>();
+  let authCacheKeyWarningIssued = false;
 
   return async (ctx, next) => {
     if (ctx.request.memoryCache?.skip) {
@@ -155,6 +174,20 @@ export function createCacheMiddleware(
     const rawKey =
       options?.key?.({ request: ctx.request, url: urlString }) ??
       `${method} ${urlString}`;
+    if (
+      !authCacheKeyWarningIssued &&
+      options?.suppressAuthCacheKeyWarning !== true &&
+      options?.key === undefined &&
+      varyHeaderNames.length === 0 &&
+      headersHaveAuthOrCookie(ctx.request.headers)
+    ) {
+      authCacheKeyWarningIssued = true;
+      if (typeof console !== "undefined" && typeof console.warn === "function") {
+        console.warn(
+          "[openfetch] createCacheMiddleware: request uses Authorization or Cookie but varyHeaderNames is empty and no custom key is set; cache entries may be shared across users. Use varyHeaderNames: [\"authorization\", \"cookie\"] or options.key, or set suppressAuthCacheKeyWarning: true if this is intentional."
+        );
+      }
+    }
     const key = appendCacheKeyVaryHeaders(
       rawKey,
       ctx.request.headers,

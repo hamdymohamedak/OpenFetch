@@ -7,7 +7,7 @@ openfetch is a thin `fetch` wrapper. Callers supply URLs, headers, and bodies. T
 - **Axios-class proxy CVEs (e.g. CVE-2025-62718 / `NO_PROXY` normalization)** — openfetch does **not** implement axios-style `HTTP_PROXY` / `HTTPS_PROXY` / `NO_PROXY` matching. Outbound routing follows the host runtime’s `fetch` (and any platform proxy). Those CVEs therefore do **not** map to openfetch code paths; policy still belongs at the app, proxy, or mesh layer.
 
 - **Network trust** — You choose endpoints. Blocking private IPs, metadata hosts, or open redirects is an **application** concern for partially trusted URLs.
-- **Secrets** — `toShape()` on `OpenFetchError` avoids echoing `config.auth`, but the full `Error` object may still carry `config` (including credentials). Response bodies and headers in `toShape()` may still contain tokens or PII; use `toShape({ includeResponseData: false, includeResponseHeaders: false })` when serializing for untrusted clients or broad logs. Never send raw errors to untrusted clients without redaction.
+- **Secrets** — `toShape()` on `OpenFetchError` avoids echoing `config.auth`, but the full `Error` object may still carry `config` (including credentials). Response bodies and headers in `toShape()` may still contain tokens or PII; use `toShape({ includeResponseData: false, includeResponseHeaders: false })` when serializing for untrusted clients or broad logs. By default, `toShape()` also **redacts common sensitive query parameters** in the serialized `url` (for example `token`, `code`, `password`); use `redactSensitiveUrlQuery: false` only for trusted diagnostics. The `debug()` plugin applies the same redaction to logged URLs. Never send raw errors to untrusted clients without redaction.
 - **Supply chain** — Install this package from npm or a verified Git tag; verify integrity with your package manager.
 
 ## Server-side usage and SSRF
@@ -33,6 +33,8 @@ Mitigations (combine as appropriate):
 - Use `appendCacheKeyVaryHeaders` when building a custom key.
 
 Unauthenticated, fully public GETs may keep the default key.
+
+The middleware emits a **one-time `console.warn`** the first time it sees `Authorization` or `Cookie` on a cacheable request while `varyHeaderNames` is empty and no custom `key` is set. Suppress with `suppressAuthCacheKeyWarning: true` when you know the cache is safe (for example anonymous-only endpoints).
 
 ## Retry and non-idempotent methods
 

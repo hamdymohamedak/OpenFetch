@@ -29,6 +29,15 @@ export type DebugPluginOptions = {
     maskPartialTailLength?: number;
     /** When true, includes masked request headers on the `request` phase (never raw secrets). */
     includeRequestHeaders?: boolean;
+    /**
+     * When true (default), redacts sensitive query parameter values in logged URLs
+     * (same built-in list as `redactSensitiveUrlQuery` from the main package export).
+     */
+    maskUrlQuery?: boolean;
+    /** Extra query parameter names to redact in the logged URL (case-insensitive). */
+    sensitiveQueryParamNames?: string[];
+    /** Replacement string for redacted query values in the logged URL (default `"[REDACTED]"`). */
+    sensitiveQueryParamReplacement?: string;
 };
 /**
  * Development-oriented logging middleware. Omit from production bundles if unused.

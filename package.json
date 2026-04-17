@@ -41,17 +41,46 @@
   "keywords": [
     "fetch",
     "http",
+    "http-client",
+    "https",
+    "rest",
+    "rest-client",
+    "api-client",
     "middleware",
+    "interceptors",
+    "retry",
+    "timeout",
+    "cache",
+    "typescript",
+    "esm",
     "rsc",
     "react-server-components",
-    "universal"
+    "nextjs",
+    "nodejs",
+    "bun",
+    "deno",
+    "cloudflare-workers",
+    "edge",
+    "browser",
+    "isomorphic",
+    "universal",
+    "zero-dependencies",
+    "fluent",
+    "abortcontroller",
+    "axios-alternative",
+    "ky-alternative",
+    "openfetch"
   ],
   "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/openfetch-js/OpenFetch.git"
   },
-  "homepage": "https://hamdymohamedak.github.io/openfetch-docs/",
+  "homepage": "https://openfetch-js.github.io/openfetch-docs/",
   "bugs": {
     "url": "https://github.com/openfetch-js/OpenFetch/issues"
   },

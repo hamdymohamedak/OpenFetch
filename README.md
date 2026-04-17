@@ -111,7 +111,7 @@ createCacheMiddleware(store, {
 });
 ```
 
-Or build a custom `key` and use `appendCacheKeyVaryHeaders` from the package exports. See [SECURITY.md](SECURITY.md).
+Or build a custom `key` and use `appendCacheKeyVaryHeaders` from the package exports. See [SECURITY.md](https://github.com/openfetch-js/OpenFetch/blob/main/SECURITY.md).
 
 ### Retries and POST/PUT
 
@@ -125,7 +125,7 @@ For low-level access without consuming the body in openFetch, set `rawResponse: 
 
 ### Optional URL guard (server-side)
 
-For URLs influenced by untrusted input, either call `assertSafeHttpUrl(url)` before requesting or enable **`assertSafeUrl: true`** on the client (defaults or per request). That blocks literal private/loopback IPs for `http:`/`https:` on the fully resolved URL; it does not fix DNS rebinding — see [SECURITY.md](SECURITY.md).
+For URLs influenced by untrusted input, either call `assertSafeHttpUrl(url)` before requesting or enable **`assertSafeUrl: true`** on the client (defaults or per request). That blocks literal private/loopback IPs for `http:`/`https:` on the fully resolved URL; it does not fix DNS rebinding — see [SECURITY.md](https://github.com/openfetch-js/OpenFetch/blob/main/SECURITY.md).
 
 ### Errors and logging
 
@@ -134,9 +134,10 @@ For URLs influenced by untrusted input, either call `assertSafeHttpUrl(url)` bef
 ## Documentation
 
 - **Guide (VitePress):** [openfetch-js.github.io/openfetch-docs/](https://openfetch-js.github.io/openfetch-docs/)
-- **Security:** [SECURITY.md](SECURITY.md)
-- **Claude Code:** add the marketplace with `claude plugin marketplace add openfetch-js/OpenFetch`, then `claude plugin install openfetch@openfetch-js` (see the plugin bundle in [`openfetchskill/`](openfetchskill/README.md)).
-- **Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md)
+- **Security:** [SECURITY.md](https://github.com/openfetch-js/OpenFetch/blob/main/SECURITY.md)
+- **Claude Code:** `claude plugin marketplace add openfetch-js/OpenFetch`, then `claude plugin install openfetch@openfetch-js`. Published skill plugin: [openFetchSkill — README](https://github.com/openfetch-js/openFetchSkill/blob/main/README.md).
+- **Skill folder template (this monorepo):** [examples/claude-skill](https://github.com/openfetch-js/OpenFetch/tree/main/examples/claude-skill) — layout reference; see [examples/README.md](https://github.com/openfetch-js/OpenFetch/blob/main/examples/README.md).
+- **Contributing:** [CONTRIBUTING.md](https://github.com/openfetch-js/OpenFetch/blob/main/CONTRIBUTING.md)
 
 ## Requirements
 

@@ -1,8 +1,8 @@
 # Claude skill plugin — structure reference
 
-This tree is a **copy-paste template**. It mirrors **[`openfetchskill/`](../../openfetchskill/)**, which is the real plugin shipped via [`.claude-plugin/marketplace.json`](../../.claude-plugin/marketplace.json).
+This tree is a **copy-paste template**. It mirrors the published plugin repo **[openfetch-js/openFetchSkill](https://github.com/openfetch-js/openFetchSkill)** (see its [README](https://github.com/openfetch-js/openFetchSkill/blob/main/README.md)), which is what [`.claude-plugin/marketplace.json`](https://github.com/openfetch-js/OpenFetch/blob/main/.claude-plugin/marketplace.json) points at from this monorepo.
 
-**Package / API content** the skill should describe lives at the **repository root**: [`package.json`](../../package.json), [`src/`](../../src/), [`README.md`](../../README.md).
+**Package / API content** the skill should describe lives in **[openfetch-js/OpenFetch](https://github.com/openfetch-js/OpenFetch)** at the repo root: [`package.json`](https://github.com/openfetch-js/OpenFetch/blob/main/package.json), [`src/`](https://github.com/openfetch-js/OpenFetch/tree/main/src), [`README.md`](https://github.com/openfetch-js/OpenFetch/blob/main/README.md).
 
 ## Directory tree
 
@@ -73,5 +73,5 @@ For this repo, the shipped plugin is **`./openfetchskill`** (not `./examples/cla
 ## See also
 
 - [Claude Code — plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces)
-- Live plugin: [`../../openfetchskill/`](../../openfetchskill/)
-- Examples index: [`../README.md`](../README.md)
+- Published plugin repo: [openfetch-js/openFetchSkill](https://github.com/openfetch-js/openFetchSkill)
+- Examples index in this monorepo: [examples/README.md](https://github.com/openfetch-js/OpenFetch/blob/main/examples/README.md)

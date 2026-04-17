@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { redactSensitiveUrlQuery } from "../dist/helpers/redactUrlQuery.js";
+import { redactSensitiveUrlQuery } from "../dist/shared/redactUrlQuery.js";
 
 test("redactSensitiveUrlQuery masks token and leaves other params", () => {
   const u = "https://api.example.com/x?token=SECRET&foo=bar";

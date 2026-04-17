@@ -1,10 +1,10 @@
-import { createClient } from "../core/client.js";
 import type {
   Middleware,
   OpenFetchClient,
   OpenFetchConfig,
   OpenFetchResponse,
-} from "../types/index.js";
+} from "../domain/types.js";
+import { createClient } from "../runtime/client.js";
 
 function withJsonHint(
   data: unknown,

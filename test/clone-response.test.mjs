@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cloneResponse } from "../dist/helpers/cloneResponse.js";
+import { cloneResponse } from "../dist/shared/cloneResponse.js";
 
 test("cloneResponse allows two body reads", async () => {
   const res = new Response("hello");

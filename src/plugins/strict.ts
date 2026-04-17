@@ -1,4 +1,4 @@
-import type { Middleware } from "../types/index.js";
+import type { Middleware } from "../domain/types.js";
 
 /**
  * Stricter defaults for requests that did not set `redirect` explicitly:

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { maskHeaderValues } from "../dist/helpers/maskHeaders.js";
+import { maskHeaderValues } from "../dist/shared/maskHeaders.js";
 
 test("maskHeaderValues partial preserves Bearer tail", () => {
   const out = maskHeaderValues(

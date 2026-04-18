@@ -1,4 +1,4 @@
-import type { Middleware, OpenFetchRetryOptions } from "../types/index.js";
+import type { Middleware, OpenFetchRetryOptions } from "../domain/types.js";
 export type RetryPluginOptions = Omit<OpenFetchRetryOptions, "maxAttempts"> & {
     /** Alias for `maxAttempts` (total tries including the first). */
     attempts?: number;

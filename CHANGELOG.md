@@ -21,6 +21,17 @@ For a feature matrix, examples, and execution order (middleware vs retry vs inte
 
 ---
 
+## [Unreleased]
+
+### Changed (security defaults)
+
+- **`OpenFetchError.toShape()` / `toJSON()`** — Response **`data`** and **`headers`** are omitted unless you pass `includeResponseData: true` / `includeResponseHeaders: true`.
+- **`createCacheMiddleware`** — Cache keys **always** fold `authorization` and `cookie` unless `varyHeaderNames` is explicitly `[]`. Extra `varyHeaderNames` entries are merged with those two. The one-time `console.warn` now applies only when `varyHeaderNames: []` is explicit with auth/cookie and no custom `key`.
+
+### Added
+
+- **`assertSafeUrl`** on `OpenFetchConfig` — When true, runs `assertSafeHttpUrl` on the fully resolved URL before `fetch` (e.g. `createClient({ assertSafeUrl: true })`).
+
 ## [0.2.8] - 2026-04-14
 
 ### Added

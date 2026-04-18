@@ -1,5 +1,5 @@
-import { maskHeaderValues, } from "../helpers/maskHeaders.js";
-import { redactSensitiveUrlQuery } from "../helpers/redactUrlQuery.js";
+import { maskHeaderValues, } from "../shared/maskHeaders.js";
+import { redactSensitiveUrlQuery } from "../shared/redactUrlQuery.js";
 function resolveUrl(ctx) {
     try {
         const u = ctx.request.url;

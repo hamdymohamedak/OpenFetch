@@ -2,9 +2,9 @@ import {
   maskHeaderValues,
   type MaskHeaderOptions,
   type MaskHeaderStrategy,
-} from "../helpers/maskHeaders.js";
-import { redactSensitiveUrlQuery } from "../helpers/redactUrlQuery.js";
-import type { Middleware, OpenFetchContext } from "../types/index.js";
+} from "../shared/maskHeaders.js";
+import { redactSensitiveUrlQuery } from "../shared/redactUrlQuery.js";
+import type { Middleware, OpenFetchContext } from "../domain/types.js";
 
 export type DebugPhase = "request" | "response" | "error";
 

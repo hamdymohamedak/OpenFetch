@@ -10,8 +10,8 @@ import path from "node:path";
 const root = path.dirname(fileURLToPath(import.meta.url));
 const dist = path.join(root, "..", "dist");
 
-const { mergeConfig } = await import(path.join(dist, "helpers", "mergeConfig.js"));
-const { buildURL } = await import(path.join(dist, "helpers", "buildURL.js"));
+const { mergeConfig } = await import(path.join(dist, "shared", "mergeConfig.js"));
+const { buildURL } = await import(path.join(dist, "shared", "buildURL.js"));
 const mod = await import(path.join(dist, "index.js"));
 const {
   createClient,
@@ -310,6 +310,19 @@ async function main() {
     assertSafeHttpUrl("https://example.com/path");
   });
 
+  await check("createClient assertSafeUrl blocks private literal host", async () => {
+    const client = createClient({
+      assertSafeUrl: true,
+      baseURL: "http://127.0.0.1:9",
+    });
+    await assert.rejects(
+      () => client.get("/x"),
+      (e) =>
+        e instanceof Error &&
+        /openfetch:\s*assertSafeHttpUrl|private|blocked|localhost/i.test(e.message)
+    );
+  });
+
   await check(
     "assertSafeHttpUrl blocks Node-normalized decimal and hex loopback hosts",
     async () => {
@@ -574,7 +587,7 @@ async function main() {
   );
 
   await check(
-    "createCacheMiddleware warns once when auth headers used without varyHeaderNames",
+    "createCacheMiddleware default vary isolates Authorization (no warn)",
     async () => {
       const warnings = [];
       const orig = console.warn;
@@ -595,6 +608,49 @@ async function main() {
           baseURL: `http://127.0.0.1:${port}`,
           middlewares: [createCacheMiddleware(store, { ttlMs: 60_000 })],
         });
+        await cached.get("/isolated-path", {
+          headers: { Authorization: "Bearer a" },
+        });
+        await cached.get("/isolated-path", {
+          headers: { Authorization: "Bearer b" },
+        });
+        assert.equal(warnings.length, 0);
+        assert.equal(hits, 2);
+      } finally {
+        console.warn = orig;
+        server.close();
+        await new Promise((r) => server.once("close", r));
+      }
+    }
+  );
+
+  await check(
+    "createCacheMiddleware warns once when varyHeaderNames explicitly [] with auth",
+    async () => {
+      const warnings = [];
+      const orig = console.warn;
+      console.warn = (...args) => {
+        warnings.push(args.join(" "));
+      };
+      const store = new MemoryCacheStore({ maxEntries: 10 });
+      let hits = 0;
+      const server = http.createServer((_req, res) => {
+        hits++;
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end("{}");
+      });
+      await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const { port } = server.address();
+      try {
+        const cached = createClient({
+          baseURL: `http://127.0.0.1:${port}`,
+          middlewares: [
+            createCacheMiddleware(store, {
+              ttlMs: 60_000,
+              varyHeaderNames: [],
+            }),
+          ],
+        });
         await cached.get("/warn-path", {
           headers: { Authorization: "Bearer a" },
         });
@@ -613,7 +669,7 @@ async function main() {
   );
 
   await check(
-    "OpenFetchError.toShape can omit response data and headers",
+    "OpenFetchError.toShape omits response data and headers by default",
     async () => {
       const cfg = { url: "http://127.0.0.1/x", method: "GET" };
       const err = new OpenFetchError("bad", {
@@ -626,12 +682,17 @@ async function main() {
           config: cfg,
         },
       });
-      const s1 = JSON.stringify(err.toShape({ includeResponseData: false }));
+      const s0 = JSON.stringify(err.toShape());
+      assert.equal(s0.includes("LEAK"), false);
+      assert.equal(s0.includes("SECRET_HEADER"), false);
+      const s1 = JSON.stringify(err.toJSON());
       assert.equal(s1.includes("LEAK"), false);
+      assert.equal(s1.includes("SECRET_HEADER"), false);
       const s2 = JSON.stringify(
-        err.toShape({ includeResponseHeaders: false })
+        err.toShape({ includeResponseData: true, includeResponseHeaders: true })
       );
-      assert.equal(s2.includes("SECRET_HEADER"), false);
+      assert.ok(s2.includes("LEAK"));
+      assert.ok(s2.includes("SECRET_HEADER"));
     }
   );
 

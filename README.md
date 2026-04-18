@@ -7,15 +7,6 @@
 </p>
 
 # @hamdymohamedak/openfetch
-<p align="center">
-  <img
-    src="https://cdn.jsdelivr.net/npm/@hamdymohamedak/openfetch@latest/docs/openfetch-logo.jpg"
-    alt="openFetch official logo"
-    width="400"
-  />
-</p>
-
-# @hamdymohamedak/openfetch
 
 A small, dependency-free HTTP client for JavaScript runtimes that expose the standard [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) API. It supports instances with defaults, request and response interceptors, HTTP verb helpers, optional request/response transforms, composable middleware, retries, structured debug logging, optional JSON validation ([Standard Schema](https://github.com/standard-schema/standard-schema)), and in-memory caching—without legacy browser-only globals.
 

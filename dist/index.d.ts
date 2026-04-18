@@ -6,7 +6,7 @@ export { createFluentClient } from "./sugar/fluent.js";
 export type { FluentOpenFetchClient, RequestChain } from "./sugar/fluent.js";
 export { retry, timeout, hooks, debug, strictFetch, } from "./plugins/index.js";
 export type { RetryPluginOptions, HooksPluginOptions, DebugPluginOptions, DebugLogPayload, DebugPhase, } from "./plugins/index.js";
-export { OpenFetchError, isOpenFetchError } from "./domain/error.js";
+export { OpenFetchError, isOpenFetchError, isHTTPError, isTimeoutError, } from "./domain/error.js";
 export type { OpenFetchErrorShape, OpenFetchErrorToShapeOptions, } from "./domain/error.js";
 export { InterceptorManager } from "./domain/interceptors.js";
 export { createRetryMiddleware, } from "./runtime/retry.js";
@@ -16,5 +16,8 @@ export { generateIdempotencyKey, hasIdempotencyKeyHeader, ensureIdempotencyKeyHe
 export { maskHeaderValues, type MaskHeaderStrategy, type MaskHeaderOptions, } from "./shared/maskHeaders.js";
 export { redactSensitiveUrlQuery, DEFAULT_SENSITIVE_QUERY_PARAM_NAMES, type RedactUrlQueryOptions, } from "./shared/redactUrlQuery.js";
 export { cloneResponse } from "./shared/cloneResponse.js";
+export { SchemaValidationError, isSchemaValidationError, } from "./domain/schemaValidationError.js";
+export { OpenFetchForceRetry, isOpenFetchForceRetry, } from "./domain/forceRetry.js";
+export type { StandardSchemaV1, StandardSchemaV1InferOutput, StandardSchemaV1Issue, StandardSchemaV1Options, StandardSchemaV1Result, StandardSchemaV1SuccessResult, StandardSchemaV1FailureResult, StandardSchemaV1Types, } from "./domain/standardSchema.js";
 export type { Middleware, NextFn, OpenFetchClient, OpenFetchConfig, OpenFetchContext, OpenFetchInterceptors, OpenFetchMemoryCacheRequestOptions, OpenFetchResponse, OpenFetchRetryOptions, RequestConfig, TransformRequest, TransformResponse, } from "./types/index.js";
 //# sourceMappingURL=index.d.ts.map

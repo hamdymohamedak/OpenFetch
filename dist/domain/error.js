@@ -65,3 +65,14 @@ export class OpenFetchError extends Error {
 export function isOpenFetchError(err) {
     return err instanceof OpenFetchError;
 }
+/** `OpenFetchError` with `code === "ERR_BAD_RESPONSE"` and a populated `response`. */
+export function isHTTPError(err) {
+    return (err instanceof OpenFetchError &&
+        err.code === "ERR_BAD_RESPONSE" &&
+        err.response != null);
+}
+/** Per-attempt fetch timeout (`ERR_TIMEOUT`) or retry budget exceeded (`ERR_RETRY_TIMEOUT`). */
+export function isTimeoutError(err) {
+    return (err instanceof OpenFetchError &&
+        (err.code === "ERR_TIMEOUT" || err.code === "ERR_RETRY_TIMEOUT"));
+}

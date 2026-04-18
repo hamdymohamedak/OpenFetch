@@ -1,6 +1,6 @@
 {
   "name": "@hamdymohamedak/openfetch",
-  "version": "0.2.9",
+  "version": "1.0.0",
   "description": "OpenFetch is a lean, TypeScript-first HTTP client on the native Fetch API—middleware and interceptors instead of a monolithic core, with plug-in retries, timeouts, lifecycle hooks, and structured debug logging. Optional in-memory caching, fluent chaining via the sugar export, and small utilities for safer URLs, idempotency keys, and redacted logs (headers and query strings) keep requests observable without leaking secrets. ESM-only, zero runtime dependencies, tree-shakeable exports; runs on Node 18+, browsers, Bun, Deno, and edge runtimes (e.g. Cloudflare Workers), with a design that plays well with Server Components",
   "type": "module",
   "sideEffects": false,

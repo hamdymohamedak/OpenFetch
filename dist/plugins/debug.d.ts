@@ -1,5 +1,5 @@
-import { type MaskHeaderStrategy } from "../helpers/maskHeaders.js";
-import type { Middleware } from "../types/index.js";
+import { type MaskHeaderStrategy } from "../shared/maskHeaders.js";
+import type { Middleware } from "../domain/types.js";
 export type DebugPhase = "request" | "response" | "error";
 export type DebugLogPayload = {
     method: string;

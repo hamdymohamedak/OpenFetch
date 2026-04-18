@@ -1,4 +1,4 @@
-import type { Middleware, OpenFetchContext } from "../types/index.js";
+import type { Middleware, OpenFetchContext } from "../domain/types.js";
 
 export type HooksPluginOptions = {
   /** Runs before the rest of the middleware stack and `fetch`. */

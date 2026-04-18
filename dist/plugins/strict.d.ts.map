@@ -1,1 +1,1 @@
-{"version":3,"file":"strict.d.ts","sourceRoot":"","sources":["../../src/plugins/strict.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,UAAU,EAAE,MAAM,mBAAmB,CAAC;AAEpD;;;GAGG;AACH,wBAAgB,WAAW,IAAI,UAAU,CAOxC"}
+{"version":3,"file":"strict.d.ts","sourceRoot":"","sources":["../../src/plugins/strict.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,UAAU,EAAE,MAAM,oBAAoB,CAAC;AAErD;;;GAGG;AACH,wBAAgB,WAAW,IAAI,UAAU,CAOxC"}

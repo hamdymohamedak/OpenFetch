@@ -1,3 +1,4 @@
+import { validateJsonWithStandardSchema } from "../domain/validateJsonSchema.js";
 import { createClient } from "../runtime/client.js";
 function withJsonHint(data, config) {
     const headers = { ...(config.headers ?? {}) };
@@ -111,11 +112,17 @@ function createRequestChain(base, url, config = {}, memoState) {
         memo() {
             return createRequestChain(base, url, { ...config }, { promise: null });
         },
-        json() {
+        json(schema) {
             if (memoState) {
                 return (async () => {
                     const snap = await ensureMemoSnapshot();
                     let data = await parseBuffer(snap.buf, "json", snap.headers);
+                    if (schema !== undefined) {
+                        data = await validateJsonWithStandardSchema(data, schema);
+                    }
+                    else if (snap.config.jsonSchema != null) {
+                        data = await validateJsonWithStandardSchema(data, snap.config.jsonSchema);
+                    }
                     data = await applyTransforms(data, snap.config.transformResponse);
                     return data;
                 })();
@@ -125,6 +132,7 @@ function createRequestChain(base, url, config = {}, memoState) {
                 method: methodOrGet(),
                 responseType: "json",
                 unwrapResponse: true,
+                ...(schema !== undefined ? { jsonSchema: schema } : {}),
             });
         },
         text() {
@@ -219,6 +227,9 @@ function createRequestChain(base, url, config = {}, memoState) {
                     const snap = await ensureMemoSnapshot();
                     const rt = snap.config.responseType ?? inferBodyKind(snap.headers);
                     let data = await parseBuffer(snap.buf, rt, snap.headers);
+                    if (snap.config.jsonSchema != null) {
+                        data = await validateJsonWithStandardSchema(data, snap.config.jsonSchema);
+                    }
                     data = await applyTransforms(data, snap.config.transformResponse);
                     const open = {
                         data: data,

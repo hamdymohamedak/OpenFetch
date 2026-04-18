@@ -1,4 +1,5 @@
 import type { Middleware, OpenFetchClient, OpenFetchConfig, OpenFetchResponse } from "../domain/types.js";
+import type { StandardSchemaV1, StandardSchemaV1InferOutput } from "../domain/standardSchema.js";
 /**
  * Lazy builder: `.get()` / `.post()` only accumulate config. Each **terminal** method (`.json()`, `.text()`,
  * `.send()`, `.raw()`, …) starts **one new** HTTP request — calling two terminals is two requests, not one
@@ -23,6 +24,8 @@ export type RequestChain = {
     memo(): RequestChain;
     /** Parsed JSON body (`unwrapResponse` + `responseType: json`). */
     json<T = unknown>(): Promise<T>;
+    /** Parsed JSON validated with a [Standard Schema](https://github.com/standard-schema/standard-schema). */
+    json<Schema extends StandardSchemaV1>(schema: Schema): Promise<StandardSchemaV1InferOutput<Schema>>;
     /** Text body (`unwrapResponse` + `responseType: text`). */
     text(): Promise<string>;
     blob(): Promise<Blob>;

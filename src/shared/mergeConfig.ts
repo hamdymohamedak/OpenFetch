@@ -1,6 +1,8 @@
 import type {
   OpenFetchConfig,
+  OpenFetchContext,
   OpenFetchMemoryCacheRequestOptions,
+  OpenFetchResponse,
   OpenFetchRetryOptions,
 } from "../domain/types.js";
 
@@ -14,12 +16,54 @@ function stripPollution(record: Record<string, unknown> | undefined): void {
   }
 }
 
+function composeOnBeforeRetry(
+  a?: OpenFetchRetryOptions["onBeforeRetry"],
+  b?: OpenFetchRetryOptions["onBeforeRetry"]
+): OpenFetchRetryOptions["onBeforeRetry"] | undefined {
+  if (!a) return b;
+  if (!b) return a;
+  return async (
+    ctx: OpenFetchContext,
+    info: { attempt: number; error: unknown }
+  ) => {
+    await a(ctx, info);
+    await b(ctx, info);
+  };
+}
+
+function composeOnAfterResponse(
+  a?: OpenFetchRetryOptions["onAfterResponse"],
+  b?: OpenFetchRetryOptions["onAfterResponse"]
+): OpenFetchRetryOptions["onAfterResponse"] | undefined {
+  if (!a) return b;
+  if (!b) return a;
+  return async (ctx: OpenFetchContext, response: OpenFetchResponse) => {
+    await a(ctx, response);
+    await b(ctx, response);
+  };
+}
+
 function mergeRetry(
   a: OpenFetchRetryOptions | undefined,
   b: OpenFetchRetryOptions | undefined
 ): OpenFetchRetryOptions | undefined {
   if (!a && !b) return undefined;
-  return { ...a, ...b };
+  const {
+    onBeforeRetry: aBefore,
+    onAfterResponse: aAfter,
+    ...aRest
+  } = a ?? {};
+  const {
+    onBeforeRetry: bBefore,
+    onAfterResponse: bAfter,
+    ...bRest
+  } = b ?? {};
+  return {
+    ...aRest,
+    ...bRest,
+    onBeforeRetry: composeOnBeforeRetry(aBefore, bBefore),
+    onAfterResponse: composeOnAfterResponse(aAfter, bAfter),
+  };
 }
 
 function mergeMemoryCache(
@@ -53,6 +97,7 @@ export function mergeConfig(
       ...(globalConfig.transformResponse ?? []),
       ...(localConfig.transformResponse ?? []),
     ],
+    init: [...(globalConfig.init ?? []), ...(localConfig.init ?? [])],
     retry: mergeRetry(globalConfig.retry, localConfig.retry),
     memoryCache: mergeMemoryCache(
       globalConfig.memoryCache,

@@ -1,4 +1,5 @@
 import { OpenFetchError } from "../domain/error.js";
+import { OpenFetchForceRetry } from "../domain/forceRetry.js";
 import { buildURL } from "../shared/buildURL.js";
 import { ensureIdempotencyKeyHeader, generateIdempotencyKey, hasIdempotencyKeyHeader, } from "../shared/idempotencyKey.js";
 import { mergeAbortSignals } from "../shared/mergeAbortSignals.js";
@@ -66,6 +67,8 @@ function resolveRetryOptions(ctx, factoryDefaults) {
         enforceTotalTimeout: r.enforceTotalTimeout !== false,
         timeoutPerAttemptMs: r.timeoutPerAttemptMs,
         shouldRetry: r.shouldRetry,
+        onBeforeRetry: r.onBeforeRetry,
+        onAfterResponse: r.onAfterResponse,
     };
 }
 /** Stable key across retry attempts for POST + non-idempotent retry mode. */
@@ -138,6 +141,9 @@ function assertWithinRetryDeadline(ctx, deadlineMono) {
     }
 }
 async function builtinShouldRetry(err, ro, request) {
+    if (err instanceof OpenFetchForceRetry) {
+        return true;
+    }
     if (err instanceof OpenFetchError) {
         if (err.code === "ERR_CANCELED" || err.code === "ERR_RETRY_TIMEOUT") {
             return false;
@@ -192,13 +198,20 @@ export function createRetryMiddleware(factoryDefaults) {
                     ctx.request.timeout = ro.timeoutPerAttemptMs;
                 }
                 applyPostIdempotencyKey(ctx.request, ro);
+                const finalizeSuccess = async () => {
+                    if (ctx.response != null && ro.onAfterResponse) {
+                        await ro.onAfterResponse(ctx, ctx.response);
+                    }
+                };
                 if (deadlineMono == null) {
                     await next();
+                    await finalizeSuccess();
                     return;
                 }
                 if (!enforceTotalAbort) {
                     assertWithinRetryDeadline(ctx, deadlineMono);
                     await next();
+                    await finalizeSuccess();
                     return;
                 }
                 const userSig = ctx.request.signal ?? null;
@@ -223,6 +236,7 @@ export function createRetryMiddleware(factoryDefaults) {
                     clearTimeout(deadlineTimer);
                     ctx.request.signal = userSig;
                 }
+                await finalizeSuccess();
                 return;
             }
             catch (err) {
@@ -235,6 +249,9 @@ export function createRetryMiddleware(factoryDefaults) {
                 if (!baseOk || !customOk) {
                     ctx.error = err;
                     throw err;
+                }
+                if (ro.onBeforeRetry) {
+                    await ro.onBeforeRetry(ctx, { attempt, error: err });
                 }
                 throwIfExternalAborted(ctx);
                 assertWithinRetryDeadline(ctx, deadlineMono);

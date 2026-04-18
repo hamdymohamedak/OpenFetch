@@ -1,4 +1,5 @@
 import { OpenFetchError } from "../domain/error.js";
+import { OpenFetchForceRetry } from "../domain/forceRetry.js";
 import type {
   Middleware,
   OpenFetchConfig,
@@ -73,6 +74,8 @@ type ResolvedRetry = {
   enforceTotalTimeout: boolean;
   timeoutPerAttemptMs?: number;
   shouldRetry?: OpenFetchRetryOptions["shouldRetry"];
+  onBeforeRetry?: OpenFetchRetryOptions["onBeforeRetry"];
+  onAfterResponse?: OpenFetchRetryOptions["onAfterResponse"];
 };
 
 function computeDelayMs(attemptIndex: number, ro: ResolvedRetry): number {
@@ -100,6 +103,8 @@ function resolveRetryOptions(
     enforceTotalTimeout: r.enforceTotalTimeout !== false,
     timeoutPerAttemptMs: r.timeoutPerAttemptMs,
     shouldRetry: r.shouldRetry,
+    onBeforeRetry: r.onBeforeRetry,
+    onAfterResponse: r.onAfterResponse,
   };
 }
 
@@ -180,6 +185,9 @@ async function builtinShouldRetry(
   ro: ResolvedRetry,
   request: OpenFetchConfig
 ): Promise<boolean> {
+  if (err instanceof OpenFetchForceRetry) {
+    return true;
+  }
   if (err instanceof OpenFetchError) {
     if (err.code === "ERR_CANCELED" || err.code === "ERR_RETRY_TIMEOUT") {
       return false;
@@ -238,14 +246,22 @@ export function createRetryMiddleware(
         }
         applyPostIdempotencyKey(ctx.request, ro);
 
+        const finalizeSuccess = async (): Promise<void> => {
+          if (ctx.response != null && ro.onAfterResponse) {
+            await ro.onAfterResponse(ctx, ctx.response);
+          }
+        };
+
         if (deadlineMono == null) {
           await next();
+          await finalizeSuccess();
           return;
         }
 
         if (!enforceTotalAbort) {
           assertWithinRetryDeadline(ctx, deadlineMono);
           await next();
+          await finalizeSuccess();
           return;
         }
 
@@ -270,6 +286,7 @@ export function createRetryMiddleware(
           clearTimeout(deadlineTimer);
           ctx.request.signal = userSig;
         }
+        await finalizeSuccess();
         return;
       } catch (err) {
         if (attempt >= ro.maxAttempts) {
@@ -282,6 +299,9 @@ export function createRetryMiddleware(
         if (!baseOk || !customOk) {
           ctx.error = err;
           throw err;
+        }
+        if (ro.onBeforeRetry) {
+          await ro.onBeforeRetry(ctx, { attempt, error: err });
         }
         throwIfExternalAborted(ctx);
         assertWithinRetryDeadline(ctx, deadlineMono);

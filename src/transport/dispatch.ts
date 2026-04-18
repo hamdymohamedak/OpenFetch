@@ -1,5 +1,7 @@
 import { OpenFetchError } from "../domain/error.js";
+import { SchemaValidationError } from "../domain/schemaValidationError.js";
 import type { OpenFetchConfig, OpenFetchResponse } from "../domain/types.js";
+import { validateJsonWithStandardSchema } from "../domain/validateJsonSchema.js";
 import { assertSafeHttpUrl } from "../shared/assertSafeHttpUrl.js";
 import { buildURL } from "../shared/buildURL.js";
 import { encodeBasicAuth } from "../shared/basicAuth.js";
@@ -8,6 +10,42 @@ import { headersToRecord } from "../shared/responseHeaders.js";
 
 const defaultValidateStatus = (status: number): boolean =>
   status >= 200 && status < 300;
+
+function resolveValidateStatus(
+  config: OpenFetchConfig
+): (status: number) => boolean {
+  if (config.validateStatus) {
+    return config.validateStatus;
+  }
+
+  const th = config.throwHttpErrors;
+  if (th === false) {
+    return () => true;
+  }
+
+  if (typeof th === "function") {
+    return (status: number) => !th(status);
+  }
+
+  return defaultValidateStatus;
+}
+
+/** Suggested `Accept` when `responseType` is set and caller did not provide `accept`. */
+function applySuggestedAccept(
+  config: OpenFetchConfig,
+  headers: Record<string, string>
+): void {
+  if (headers["accept"]) return;
+  const rt = config.responseType;
+  if (!rt) return;
+  if (rt === "json") {
+    headers["accept"] = "application/json";
+  } else if (rt === "text") {
+    headers["accept"] = "text/plain,*/*;q=0.01";
+  } else if (rt === "arraybuffer" || rt === "blob" || rt === "stream") {
+    headers["accept"] = "*/*";
+  }
+}
 
 function normalizeHeaders(h: Record<string, string>): Record<string, string> {
   const out: Record<string, string> = {};
@@ -61,6 +99,7 @@ export async function dispatch(
   }
 
   let headers = normalizeHeaders({ ...(config.headers ?? {}) });
+  applySuggestedAccept(config, headers);
 
   if (config.auth) {
     const token = encodeBasicAuth(config.auth.username, config.auth.password);
@@ -98,12 +137,16 @@ export async function dispatch(
       ? "include"
       : (config.credentials ?? undefined);
 
-  const validateStatus = config.validateStatus ?? defaultValidateStatus;
+  const validateStatus = resolveValidateStatus(config);
 
   const controller = new AbortController();
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  let perAttemptTimedOut = false;
   if (config.timeout != null && config.timeout > 0) {
-    timeoutId = setTimeout(() => controller.abort(), config.timeout);
+    timeoutId = setTimeout(() => {
+      perAttemptTimedOut = true;
+      controller.abort();
+    }, config.timeout);
   }
 
   const signal = mergeAbortSignals(config.signal ?? undefined, controller);
@@ -174,6 +217,10 @@ export async function dispatch(
     }
 
     let outData: unknown = openResponse.data;
+    if (config.jsonSchema != null) {
+      outData = await validateJsonWithStandardSchema(outData, config.jsonSchema);
+    }
+
     for (const tr of config.transformResponse ?? []) {
       outData = await tr(outData);
     }
@@ -184,6 +231,7 @@ export async function dispatch(
     };
   } catch (e) {
     if (e instanceof OpenFetchError) throw e;
+    if (e instanceof SchemaValidationError) throw e;
     const aborted =
       signal.aborted ||
       (typeof DOMException !== "undefined" &&
@@ -191,6 +239,20 @@ export async function dispatch(
         e.name === "AbortError") ||
       (e instanceof Error && e.name === "AbortError");
     if (aborted) {
+      if (config.signal?.aborted) {
+        throw new OpenFetchError("Request aborted", {
+          config,
+          code: "ERR_CANCELED",
+          request: { url: urlString },
+        });
+      }
+      if (perAttemptTimedOut) {
+        throw new OpenFetchError("Request timed out", {
+          config,
+          code: "ERR_TIMEOUT",
+          request: { url: urlString },
+        });
+      }
       throw new OpenFetchError("Request aborted", {
         config,
         code: "ERR_CANCELED",

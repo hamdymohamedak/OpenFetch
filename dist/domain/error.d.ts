@@ -55,4 +55,8 @@ export declare class OpenFetchError<T = unknown> extends Error {
     toJSON(): OpenFetchErrorShape;
 }
 export declare function isOpenFetchError(err: unknown): err is OpenFetchError;
+/** `OpenFetchError` with `code === "ERR_BAD_RESPONSE"` and a populated `response`. */
+export declare function isHTTPError(err: unknown): err is OpenFetchError;
+/** Per-attempt fetch timeout (`ERR_TIMEOUT`) or retry budget exceeded (`ERR_RETRY_TIMEOUT`). */
+export declare function isTimeoutError(err: unknown): err is OpenFetchError;
 //# sourceMappingURL=error.d.ts.map

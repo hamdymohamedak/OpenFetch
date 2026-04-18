@@ -7,10 +7,37 @@ function stripPollution(record) {
         delete record[k];
     }
 }
+function composeOnBeforeRetry(a, b) {
+    if (!a)
+        return b;
+    if (!b)
+        return a;
+    return async (ctx, info) => {
+        await a(ctx, info);
+        await b(ctx, info);
+    };
+}
+function composeOnAfterResponse(a, b) {
+    if (!a)
+        return b;
+    if (!b)
+        return a;
+    return async (ctx, response) => {
+        await a(ctx, response);
+        await b(ctx, response);
+    };
+}
 function mergeRetry(a, b) {
     if (!a && !b)
         return undefined;
-    return { ...a, ...b };
+    const { onBeforeRetry: aBefore, onAfterResponse: aAfter, ...aRest } = a ?? {};
+    const { onBeforeRetry: bBefore, onAfterResponse: bAfter, ...bRest } = b ?? {};
+    return {
+        ...aRest,
+        ...bRest,
+        onBeforeRetry: composeOnBeforeRetry(aBefore, bBefore),
+        onAfterResponse: composeOnAfterResponse(aAfter, bAfter),
+    };
 }
 function mergeMemoryCache(a, b) {
     if (!a && !b)
@@ -37,6 +64,7 @@ export function mergeConfig(globalConfig, localConfig) {
             ...(globalConfig.transformResponse ?? []),
             ...(localConfig.transformResponse ?? []),
         ],
+        init: [...(globalConfig.init ?? []), ...(localConfig.init ?? [])],
         retry: mergeRetry(globalConfig.retry, localConfig.retry),
         memoryCache: mergeMemoryCache(globalConfig.memoryCache, localConfig.memoryCache),
     };

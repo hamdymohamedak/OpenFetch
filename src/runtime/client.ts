@@ -6,6 +6,7 @@ import type {
   RequestConfig,
 } from "../domain/types.js";
 import { mergeConfig } from "../shared/mergeConfig.js";
+import { openFetchConfigFromRequest } from "../shared/requestFromNative.js";
 import { dispatch } from "../transport/dispatch.js";
 import { applyMiddlewares } from "./middleware.js";
 
@@ -38,14 +39,23 @@ export function createClient(initialDefaults: OpenFetchConfig = {}): OpenFetchCl
   const responseInterceptors = new InterceptorManager<OpenFetchResponse>();
 
   async function run<T = unknown>(
-    urlOrConfig: string | URL | RequestConfig,
+    urlOrConfig: string | URL | Request | RequestConfig,
     config?: OpenFetchConfig
   ): Promise<OpenFetchResponse<T> | T> {
     let merged: OpenFetchConfig;
-    if (typeof urlOrConfig === "string" || urlOrConfig instanceof URL) {
+    if (urlOrConfig instanceof Request) {
+      merged = mergeConfig(
+        mergeConfig(defaults, openFetchConfigFromRequest(urlOrConfig)),
+        config ?? {}
+      );
+    } else if (typeof urlOrConfig === "string" || urlOrConfig instanceof URL) {
       merged = mergeConfig(defaults, { ...config, url: urlOrConfig });
     } else {
       merged = mergeConfig(defaults, urlOrConfig);
+    }
+
+    for (const fn of merged.init ?? []) {
+      fn(merged);
     }
 
     if (merged.url === undefined || merged.url === "") {

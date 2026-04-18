@@ -4,7 +4,7 @@ export default openFetch;
 export { createClient, create };
 export { createFluentClient } from "./sugar/fluent.js";
 export { retry, timeout, hooks, debug, strictFetch, } from "./plugins/index.js";
-export { OpenFetchError, isOpenFetchError } from "./domain/error.js";
+export { OpenFetchError, isOpenFetchError, isHTTPError, isTimeoutError, } from "./domain/error.js";
 export { InterceptorManager } from "./domain/interceptors.js";
 export { createRetryMiddleware, } from "./runtime/retry.js";
 export { MemoryCacheStore, appendCacheKeyVaryHeaders, createCacheMiddleware, } from "./runtime/cache.js";
@@ -13,3 +13,5 @@ export { generateIdempotencyKey, hasIdempotencyKeyHeader, ensureIdempotencyKeyHe
 export { maskHeaderValues, } from "./shared/maskHeaders.js";
 export { redactSensitiveUrlQuery, DEFAULT_SENSITIVE_QUERY_PARAM_NAMES, } from "./shared/redactUrlQuery.js";
 export { cloneResponse } from "./shared/cloneResponse.js";
+export { SchemaValidationError, isSchemaValidationError, } from "./domain/schemaValidationError.js";
+export { OpenFetchForceRetry, isOpenFetchForceRetry, } from "./domain/forceRetry.js";

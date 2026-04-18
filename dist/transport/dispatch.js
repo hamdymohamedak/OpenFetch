@@ -1,10 +1,42 @@
 import { OpenFetchError } from "../domain/error.js";
+import { SchemaValidationError } from "../domain/schemaValidationError.js";
+import { validateJsonWithStandardSchema } from "../domain/validateJsonSchema.js";
 import { assertSafeHttpUrl } from "../shared/assertSafeHttpUrl.js";
 import { buildURL } from "../shared/buildURL.js";
 import { encodeBasicAuth } from "../shared/basicAuth.js";
 import { mergeAbortSignals } from "../shared/mergeAbortSignals.js";
 import { headersToRecord } from "../shared/responseHeaders.js";
 const defaultValidateStatus = (status) => status >= 200 && status < 300;
+function resolveValidateStatus(config) {
+    if (config.validateStatus) {
+        return config.validateStatus;
+    }
+    const th = config.throwHttpErrors;
+    if (th === false) {
+        return () => true;
+    }
+    if (typeof th === "function") {
+        return (status) => !th(status);
+    }
+    return defaultValidateStatus;
+}
+/** Suggested `Accept` when `responseType` is set and caller did not provide `accept`. */
+function applySuggestedAccept(config, headers) {
+    if (headers["accept"])
+        return;
+    const rt = config.responseType;
+    if (!rt)
+        return;
+    if (rt === "json") {
+        headers["accept"] = "application/json";
+    }
+    else if (rt === "text") {
+        headers["accept"] = "text/plain,*/*;q=0.01";
+    }
+    else if (rt === "arraybuffer" || rt === "blob" || rt === "stream") {
+        headers["accept"] = "*/*";
+    }
+}
 function normalizeHeaders(h) {
     const out = {};
     for (const [k, v] of Object.entries(h)) {
@@ -53,6 +85,7 @@ export async function dispatch(config) {
         assertSafeHttpUrl(urlString);
     }
     let headers = normalizeHeaders({ ...(config.headers ?? {}) });
+    applySuggestedAccept(config, headers);
     if (config.auth) {
         const token = encodeBasicAuth(config.auth.username, config.auth.password);
         headers["authorization"] = `Basic ${token}`;
@@ -79,11 +112,15 @@ export async function dispatch(config) {
     const credentials = config.withCredentials === true
         ? "include"
         : (config.credentials ?? undefined);
-    const validateStatus = config.validateStatus ?? defaultValidateStatus;
+    const validateStatus = resolveValidateStatus(config);
     const controller = new AbortController();
     let timeoutId;
+    let perAttemptTimedOut = false;
     if (config.timeout != null && config.timeout > 0) {
-        timeoutId = setTimeout(() => controller.abort(), config.timeout);
+        timeoutId = setTimeout(() => {
+            perAttemptTimedOut = true;
+            controller.abort();
+        }, config.timeout);
     }
     const signal = mergeAbortSignals(config.signal ?? undefined, controller);
     try {
@@ -147,6 +184,9 @@ export async function dispatch(config) {
             });
         }
         let outData = openResponse.data;
+        if (config.jsonSchema != null) {
+            outData = await validateJsonWithStandardSchema(outData, config.jsonSchema);
+        }
         for (const tr of config.transformResponse ?? []) {
             outData = await tr(outData);
         }
@@ -158,12 +198,28 @@ export async function dispatch(config) {
     catch (e) {
         if (e instanceof OpenFetchError)
             throw e;
+        if (e instanceof SchemaValidationError)
+            throw e;
         const aborted = signal.aborted ||
             (typeof DOMException !== "undefined" &&
                 e instanceof DOMException &&
                 e.name === "AbortError") ||
             (e instanceof Error && e.name === "AbortError");
         if (aborted) {
+            if (config.signal?.aborted) {
+                throw new OpenFetchError("Request aborted", {
+                    config,
+                    code: "ERR_CANCELED",
+                    request: { url: urlString },
+                });
+            }
+            if (perAttemptTimedOut) {
+                throw new OpenFetchError("Request timed out", {
+                    config,
+                    code: "ERR_TIMEOUT",
+                    request: { url: urlString },
+                });
+            }
             throw new OpenFetchError("Request aborted", {
                 config,
                 code: "ERR_CANCELED",

@@ -1,4 +1,5 @@
 import type { InterceptorManager } from "./interceptors.js";
+import type { StandardSchemaV1 } from "./standardSchema.js";
 
 /** Called by middleware to continue the chain (may run the next middleware or the core fetch). */
 export type NextFn = () => Promise<void>;
@@ -9,54 +10,6 @@ export type TransformRequest = (
 ) => unknown | Promise<unknown>;
 
 export type TransformResponse<T = unknown> = (data: unknown) => T | Promise<T>;
-
-/** Exponential backoff retry (merged from defaults + per-request). */
-export type OpenFetchRetryOptions = {
-  /** Total attempts including the first try. Default 3. */
-  maxAttempts?: number;
-  /** Base delay in ms before first retry. Default 300. */
-  baseDelayMs?: number;
-  /** Cap for backoff delay. Default 30_000. */
-  maxDelayMs?: number;
-  /** Multiplier each attempt. Default 2. */
-  factor?: number;
-  /** HTTP status codes that trigger a retry when `validateStatus` failed. */
-  retryOnStatus?: number[];
-  /** Retry when no response / network failure. Default true. */
-  retryOnNetworkError?: boolean;
-  /**
-   * When true, network/parse failures and retryable HTTP statuses are retried for any method (e.g. POST).
-   * Default false: only GET, HEAD, OPTIONS, and TRACE are retried for those cases to avoid duplicate side effects.
-   */
-  retryNonIdempotentMethods?: boolean;
-  /**
-   * When true (default), POST requests that use retry with `retryNonIdempotentMethods` and `maxAttempts > 1`
-   * get a stable `Idempotency-Key` header (if not already set) so retries share the same key (e.g. Stripe-style APIs).
-   * Set false to manage the header yourself.
-   */
-  autoIdempotencyKey?: boolean;
-  /** Optional custom gate (runs after built-in rules). */
-  shouldRetry?: (error: unknown, attempt: number) => boolean | Promise<boolean>;
-  /**
-   * Budget for the whole retry sequence (first attempt through backoff), in ms, measured with a **monotonic**
-   * clock (`performance.now()` when available) so elapsed time is stable if the system clock jumps.
-   * When `enforceTotalTimeout` is true (default), the budget is also merged into `signal` per attempt so an
-   * in-flight `fetch` aborts at expiry (user abort still wins). Set `enforceTotalTimeout: false` to only enforce
-   * the budget between attempts (a slow in-flight request may exceed it). On expiry throws `OpenFetchError`
-   * with code `ERR_RETRY_TIMEOUT`.
-   */
-  timeoutTotalMs?: number;
-  /**
-   * When `timeoutTotalMs` is set: if true (default), each attempt merges a deadline `AbortSignal` so the
-   * current `fetch` is aborted when the total budget is exhausted. If false, checks run only between attempts.
-   */
-  enforceTotalTimeout?: boolean;
-  /**
-   * If set, overrides `request.timeout` for each attempt inside this retry middleware (per-attempt `fetch` timeout).
-   * Unset leaves `timeout` from merged request config (or the `timeout()` plugin).
-   */
-  timeoutPerAttemptMs?: number;
-};
 
 /** Per-request overrides for the memory cache middleware. */
 export type OpenFetchMemoryCacheRequestOptions = {
@@ -97,7 +50,26 @@ export type OpenFetchConfig = {
    * `.send()` / normal terminals, or read and parse the `Response` yourself (see `cloneResponse`).
    */
   rawResponse?: boolean;
+  /**
+   * When set, it **overrides** {@link throwHttpErrors} for this request. Returns `true` if the HTTP status
+   * should be treated as success (no `ERR_BAD_RESPONSE`).
+   */
   validateStatus?: (status: number) => boolean;
+  /**
+   * Ky-style gate when {@link validateStatus} is **omitted**: `false` means never throw on HTTP status;
+   * a function receives the status and should return `true` to **throw** an HTTP error for that status.
+   * Ignored when `validateStatus` is provided.
+   */
+  throwHttpErrors?: boolean | ((status: number) => boolean);
+  /**
+   * After a successful status check, validate parsed JSON with a [Standard Schema](https://github.com/standard-schema/standard-schema)
+   * (e.g. Zod 3.24+). Throws `SchemaValidationError` on failure.
+   */
+  jsonSchema?: StandardSchemaV1;
+  /**
+   * Synchronous hooks on the merged config before URL resolution / `fetch` (mutate in place if needed).
+   */
+  init?: Array<(config: OpenFetchConfig) => void>;
   transformRequest?: TransformRequest[];
   transformResponse?: TransformResponse[];
   middlewares?: Middleware[];
@@ -139,6 +111,69 @@ export type OpenFetchContext = {
   error: unknown;
 };
 
+/** Exponential backoff retry (merged from defaults + per-request). */
+export type OpenFetchRetryOptions = {
+  /** Total attempts including the first try. Default 3. */
+  maxAttempts?: number;
+  /** Base delay in ms before first retry. Default 300. */
+  baseDelayMs?: number;
+  /** Cap for backoff delay. Default 30_000. */
+  maxDelayMs?: number;
+  /** Multiplier each attempt. Default 2. */
+  factor?: number;
+  /** HTTP status codes that trigger a retry when `validateStatus` failed. */
+  retryOnStatus?: number[];
+  /** Retry when no response / network failure. Default true. */
+  retryOnNetworkError?: boolean;
+  /**
+   * When true, network/parse failures and retryable HTTP statuses are retried for any method (e.g. POST).
+   * Default false: only GET, HEAD, OPTIONS, and TRACE are retried for those cases to avoid duplicate side effects.
+   */
+  retryNonIdempotentMethods?: boolean;
+  /**
+   * When true (default), POST requests that use retry with `retryNonIdempotentMethods` and `maxAttempts > 1`
+   * get a stable `Idempotency-Key` header (if not already set) so retries share the same key (e.g. Stripe-style APIs).
+   * Set false to manage the header yourself.
+   */
+  autoIdempotencyKey?: boolean;
+  /** Optional custom gate (runs after built-in rules). */
+  shouldRetry?: (error: unknown, attempt: number) => boolean | Promise<boolean>;
+  /**
+   * Budget for the whole retry sequence (first attempt through backoff), in ms, measured with a **monotonic**
+   * clock (`performance.now()` when available) so elapsed time is stable if the system clock jumps.
+   * When `enforceTotalTimeout` is true (default), the budget is also merged into `signal` per attempt so an
+   * in-flight `fetch` aborts at expiry (user abort still wins). Set `enforceTotalTimeout: false` to only enforce
+   * the budget between attempts (a slow in-flight request may exceed it). On expiry throws `OpenFetchError`
+   * with code `ERR_RETRY_TIMEOUT`.
+   */
+  timeoutTotalMs?: number;
+  /**
+   * When `timeoutTotalMs` is set: if true (default), each attempt merges a deadline `AbortSignal` so the
+   * current `fetch` aborts when the total budget is exhausted. If false, checks run only between attempts.
+   */
+  enforceTotalTimeout?: boolean;
+  /**
+   * If set, overrides `request.timeout` for each attempt inside this retry middleware (per-attempt `fetch` timeout).
+   * Unset leaves `timeout` from merged request config (or the `timeout()` plugin).
+   */
+  timeoutPerAttemptMs?: number;
+  /**
+   * Called after a failed attempt, before backoff (attempt ≥ 2). Wired by `hooks()` when `onBeforeRetry` is set.
+   */
+  onBeforeRetry?: (
+    ctx: OpenFetchContext,
+    info: { attempt: number; error: unknown }
+  ) => void | Promise<void>;
+  /**
+   * Called after a successful inner `fetch` when `ctx.response` is set. Throw `OpenFetchForceRetry`
+   * to force another attempt (handled by `createRetryMiddleware`).
+   */
+  onAfterResponse?: (
+    ctx: OpenFetchContext,
+    response: OpenFetchResponse
+  ) => void | Promise<void>;
+};
+
 export type Middleware = (ctx: OpenFetchContext, next: NextFn) => Promise<void>;
 
 export type OpenFetchInterceptors = {
@@ -152,7 +187,7 @@ export type OpenFetchClient = {
   defaults: OpenFetchConfig;
   interceptors: OpenFetchInterceptors;
   request: <T = unknown>(
-    urlOrConfig: string | URL | RequestConfig,
+    urlOrConfig: string | URL | Request | RequestConfig,
     config?: OpenFetchConfig
   ) => Promise<OpenFetchResponse<T> | T>;
   get: <T = unknown>(

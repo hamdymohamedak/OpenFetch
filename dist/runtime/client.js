@@ -1,5 +1,6 @@
 import { InterceptorManager } from "../domain/interceptors.js";
 import { mergeConfig } from "../shared/mergeConfig.js";
+import { openFetchConfigFromRequest } from "../shared/requestFromNative.js";
 import { dispatch } from "../transport/dispatch.js";
 import { applyMiddlewares } from "./middleware.js";
 function withJsonHint(data, config) {
@@ -24,11 +25,17 @@ export function createClient(initialDefaults = {}) {
     const responseInterceptors = new InterceptorManager();
     async function run(urlOrConfig, config) {
         let merged;
-        if (typeof urlOrConfig === "string" || urlOrConfig instanceof URL) {
+        if (urlOrConfig instanceof Request) {
+            merged = mergeConfig(mergeConfig(defaults, openFetchConfigFromRequest(urlOrConfig)), config ?? {});
+        }
+        else if (typeof urlOrConfig === "string" || urlOrConfig instanceof URL) {
             merged = mergeConfig(defaults, { ...config, url: urlOrConfig });
         }
         else {
             merged = mergeConfig(defaults, urlOrConfig);
+        }
+        for (const fn of merged.init ?? []) {
+            fn(merged);
         }
         if (merged.url === undefined || merged.url === "") {
             throw new Error("openfetch: `url` is required");

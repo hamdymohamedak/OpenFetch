@@ -24,7 +24,12 @@ export type {
   DebugPhase,
 } from "./plugins/index.js";
 
-export { OpenFetchError, isOpenFetchError } from "./domain/error.js";
+export {
+  OpenFetchError,
+  isOpenFetchError,
+  isHTTPError,
+  isTimeoutError,
+} from "./domain/error.js";
 export type {
   OpenFetchErrorShape,
   OpenFetchErrorToShapeOptions,
@@ -59,6 +64,25 @@ export {
   type RedactUrlQueryOptions,
 } from "./shared/redactUrlQuery.js";
 export { cloneResponse } from "./shared/cloneResponse.js";
+
+export {
+  SchemaValidationError,
+  isSchemaValidationError,
+} from "./domain/schemaValidationError.js";
+export {
+  OpenFetchForceRetry,
+  isOpenFetchForceRetry,
+} from "./domain/forceRetry.js";
+export type {
+  StandardSchemaV1,
+  StandardSchemaV1InferOutput,
+  StandardSchemaV1Issue,
+  StandardSchemaV1Options,
+  StandardSchemaV1Result,
+  StandardSchemaV1SuccessResult,
+  StandardSchemaV1FailureResult,
+  StandardSchemaV1Types,
+} from "./domain/standardSchema.js";
 
 export type {
   Middleware,

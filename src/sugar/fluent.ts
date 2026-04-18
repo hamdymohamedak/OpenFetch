@@ -1,10 +1,15 @@
-import { createClient } from "../core/client.js";
 import type {
   Middleware,
   OpenFetchClient,
   OpenFetchConfig,
   OpenFetchResponse,
-} from "../types/index.js";
+} from "../domain/types.js";
+import type {
+  StandardSchemaV1,
+  StandardSchemaV1InferOutput,
+} from "../domain/standardSchema.js";
+import { validateJsonWithStandardSchema } from "../domain/validateJsonSchema.js";
+import { createClient } from "../runtime/client.js";
 
 function withJsonHint(
   data: unknown,
@@ -114,6 +119,10 @@ export type RequestChain = {
   memo(): RequestChain;
   /** Parsed JSON body (`unwrapResponse` + `responseType: json`). */
   json<T = unknown>(): Promise<T>;
+  /** Parsed JSON validated with a [Standard Schema](https://github.com/standard-schema/standard-schema). */
+  json<Schema extends StandardSchemaV1>(
+    schema: Schema
+  ): Promise<StandardSchemaV1InferOutput<Schema>>;
   /** Text body (`unwrapResponse` + `responseType: text`). */
   text(): Promise<string>;
   blob(): Promise<Blob>;
@@ -206,11 +215,19 @@ function createRequestChain(
     memo() {
       return createRequestChain(base, url, { ...config }, { promise: null });
     },
-    json<T = unknown>() {
+    json<T = unknown>(schema?: StandardSchemaV1): Promise<T> {
       if (memoState) {
         return (async () => {
           const snap = await ensureMemoSnapshot();
           let data = await parseBuffer(snap.buf, "json", snap.headers);
+          if (schema !== undefined) {
+            data = await validateJsonWithStandardSchema(data, schema);
+          } else if (snap.config.jsonSchema != null) {
+            data = await validateJsonWithStandardSchema(
+              data,
+              snap.config.jsonSchema
+            );
+          }
           data = await applyTransforms(data, snap.config.transformResponse);
           return data as T;
         })();
@@ -220,6 +237,7 @@ function createRequestChain(
         method: methodOrGet(),
         responseType: "json",
         unwrapResponse: true,
+        ...(schema !== undefined ? { jsonSchema: schema } : {}),
       }) as Promise<T>;
     },
     text() {
@@ -315,6 +333,12 @@ function createRequestChain(
           const rt =
             snap.config.responseType ?? inferBodyKind(snap.headers);
           let data = await parseBuffer(snap.buf, rt, snap.headers);
+          if (snap.config.jsonSchema != null) {
+            data = await validateJsonWithStandardSchema(
+              data,
+              snap.config.jsonSchema
+            );
+          }
           data = await applyTransforms(data, snap.config.transformResponse);
           const open: OpenFetchResponse<T> = {
             data: data as T,

@@ -1,4 +1,4 @@
-import { createClient, create } from "./core/client.js";
+import { createClient, create } from "./runtime/client.js";
 
 const openFetch = createClient();
 
@@ -24,15 +24,20 @@ export type {
   DebugPhase,
 } from "./plugins/index.js";
 
-export { OpenFetchError, isOpenFetchError } from "./core/error.js";
+export {
+  OpenFetchError,
+  isOpenFetchError,
+  isHTTPError,
+  isTimeoutError,
+} from "./domain/error.js";
 export type {
   OpenFetchErrorShape,
   OpenFetchErrorToShapeOptions,
-} from "./core/error.js";
-export { InterceptorManager } from "./core/interceptors.js";
+} from "./domain/error.js";
+export { InterceptorManager } from "./domain/interceptors.js";
 export {
   createRetryMiddleware,
-} from "./core/retry.js";
+} from "./runtime/retry.js";
 export {
   MemoryCacheStore,
   appendCacheKeyVaryHeaders,
@@ -40,25 +45,44 @@ export {
   type CacheMiddlewareOptions,
   type MemoryCacheEntry,
   type MemoryCacheStoreOptions,
-} from "./core/cache.js";
+} from "./runtime/cache.js";
 
-export { assertSafeHttpUrl } from "./helpers/assertSafeHttpUrl.js";
+export { assertSafeHttpUrl } from "./shared/assertSafeHttpUrl.js";
 export {
   generateIdempotencyKey,
   hasIdempotencyKeyHeader,
   ensureIdempotencyKeyHeader,
-} from "./helpers/idempotencyKey.js";
+} from "./shared/idempotencyKey.js";
 export {
   maskHeaderValues,
   type MaskHeaderStrategy,
   type MaskHeaderOptions,
-} from "./helpers/maskHeaders.js";
+} from "./shared/maskHeaders.js";
 export {
   redactSensitiveUrlQuery,
   DEFAULT_SENSITIVE_QUERY_PARAM_NAMES,
   type RedactUrlQueryOptions,
-} from "./helpers/redactUrlQuery.js";
-export { cloneResponse } from "./helpers/cloneResponse.js";
+} from "./shared/redactUrlQuery.js";
+export { cloneResponse } from "./shared/cloneResponse.js";
+
+export {
+  SchemaValidationError,
+  isSchemaValidationError,
+} from "./domain/schemaValidationError.js";
+export {
+  OpenFetchForceRetry,
+  isOpenFetchForceRetry,
+} from "./domain/forceRetry.js";
+export type {
+  StandardSchemaV1,
+  StandardSchemaV1InferOutput,
+  StandardSchemaV1Issue,
+  StandardSchemaV1Options,
+  StandardSchemaV1Result,
+  StandardSchemaV1SuccessResult,
+  StandardSchemaV1FailureResult,
+  StandardSchemaV1Types,
+} from "./domain/standardSchema.js";
 
 export type {
   Middleware,
@@ -66,6 +90,7 @@ export type {
   OpenFetchClient,
   OpenFetchConfig,
   OpenFetchContext,
+  OpenFetchDebugEvent,
   OpenFetchInterceptors,
   OpenFetchMemoryCacheRequestOptions,
   OpenFetchResponse,

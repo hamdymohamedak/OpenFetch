@@ -33,7 +33,9 @@
     "build": "tsc",
     "prepublishOnly": "npm run build",
     "test:security": "npm run build && node security-tests/run.mjs",
-    "test": "npm run build && node --test test/*.test.mjs"
+    "test:unit": "npm run build && node --test test/*.test.mjs",
+    "test:browser": "npm run build && ava test/browser.ts",
+    "test": "npm run build && node --test test/*.test.mjs && ava test/browser.ts"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -81,6 +83,21 @@
     "url": "https://github.com/openfetch-js/OpenFetch/issues"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.10.0",
+    "ava": "^6.4.1",
+    "express": "^5.2.1",
+    "playwright": "^1.58.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.0"
+  },
+  "ava": {
+    "extensions": {
+      "ts": "module"
+    },
+    "nodeArguments": [
+      "--import=tsx/esm"
+    ],
+    "workerThreads": false
   }
 }

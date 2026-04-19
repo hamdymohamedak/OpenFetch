@@ -8,10 +8,11 @@
 
 # @hamdymohamedak/openfetch
 
-A small, dependency-free HTTP client for JavaScript runtimes that expose the standard [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) API. It supports instances with defaults, request and response interceptors, HTTP verb helpers, optional request/response transforms, composable middleware, retries, and in-memory caching—without legacy browser-only globals.
+A small, dependency-free HTTP client for JavaScript runtimes that expose the standard [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) API. It supports instances with defaults, request and response interceptors, HTTP verb helpers, optional request/response transforms, composable middleware, retries, structured debug logging, optional JSON validation ([Standard Schema](https://github.com/standard-schema/standard-schema)), and in-memory caching—without legacy browser-only globals.
 
 **What you get**
 
+- **ESM-only** — use `import` / `import type`; there is no CommonJS build. **1.x** follows [semantic versioning](https://semver.org/).
 - One transport: `fetch` only (Node 18+, Bun, Deno, Cloudflare Workers, browsers).
 - No polyfills required for supported environments.
 - Safe for server rendering and React Server Components: no `window`, `document`, `localStorage`, or framework coupling.
@@ -20,6 +21,8 @@ A small, dependency-free HTTP client for JavaScript runtimes that expose the sta
 
 ```bash
 npm install @hamdymohamedak/openfetch
+# or pin the stable major line:
+npm install @hamdymohamedak/openfetch@^1
 ```
 
 ## Quick start
@@ -47,14 +50,14 @@ const users = await api.get("/v1/users");
 |------|---------|
 | Instances | `createClient()` / `create()` with mutable `defaults` |
 | HTTP verbs | `request`, `get`, `post`, `put`, `patch`, `delete`, `head`, `options` |
-| Config | `baseURL`, `params`, `headers`, `timeout`, `signal`, `data` / `body`, `auth`, `responseType`, `rawResponse`, `validateStatus` |
+| Config | `baseURL`, `params`, `headers`, `timeout`, `signal`, `data` / `body`, `auth`, `responseType`, `rawResponse`, `validateStatus`, `throwHttpErrors`, `jsonSchema` (Standard Schema), `init` hooks, `debug` / `logger` (pipeline events), `assertSafeUrl`, `unwrapResponse`, plus `RequestInit` fields (`credentials`, `redirect`, …) |
 | Interceptors | Request and response stacks (documented call order) |
 | Middleware | Async `use()` hooks wrapping the fetch adapter |
-| Errors | `OpenFetchError` with `toShape()` / `toJSON()` for structured logging |
-| Retry | `createRetryMiddleware()` — backoff, `timeoutTotalMs` / `timeoutPerAttemptMs`, idempotent POST key |
+| Errors | `OpenFetchError` with `toShape()` / `toJSON()`; `SchemaValidationError` when `jsonSchema` fails |
+| Retry | `createRetryMiddleware()` — backoff, `timeoutTotalMs` / `timeoutPerAttemptMs`, idempotent POST key; `OpenFetchForceRetry` from `hooks({ onAfterResponse })` to force another attempt |
 | Cache | `MemoryCacheStore` + `createCacheMiddleware()` (TTL, optional stale-while-revalidate) |
-| Plugins | `retry({ attempts })`, `timeout(ms)`, `hooks(...)`, `debug({ maskStrategy: 'partial' \| 'hash', … })`, `strictFetch()` |
-| Fluent API | `createFluentClient()` — lazy chain; **each** `.json()` / `.raw()` / … runs **one** request unless you use `.memo()`; `.raw()` → `Response` |
+| Plugins | `retry({ attempts, … })`, `timeout(ms)`, `hooks({ onBeforeRetry, onAfterResponse, … })`, `debug({ maskStrategy: 'partial' \| 'hash', … })`, `strictFetch()` |
+| Fluent API | `createFluentClient()` — lazy chain; **each** `.json()` / `.json(schema)` / `.raw()` / … runs **one** request unless you use `.memo()`; `.raw()` → `Response` |
 
 Subpath imports (tree-shaking): `@hamdymohamedak/openfetch/plugins`, `@hamdymohamedak/openfetch/sugar`.
 
@@ -134,6 +137,7 @@ For URLs influenced by untrusted input, either call `assertSafeHttpUrl(url)` bef
 ## Documentation
 
 - **Guide (VitePress):** [openfetch-js.github.io/openfetch-docs/](https://openfetch-js.github.io/openfetch-docs/)
+- **Changelog:** [CHANGELOG.md](https://github.com/openfetch-js/OpenFetch/blob/main/CHANGELOG.md)
 - **Security:** [SECURITY.md](https://github.com/openfetch-js/OpenFetch/blob/main/SECURITY.md)
 - **Claude Code:** `claude plugin marketplace add openfetch-js/OpenFetch`, then `claude plugin install openfetch@openfetch-js`. Published skill plugin: [openFetchSkill — README](https://github.com/openfetch-js/openFetchSkill/blob/main/README.md).
 - **Skill folder template (this monorepo):** [examples/claude-skill](https://github.com/openfetch-js/OpenFetch/tree/main/examples/claude-skill) — layout reference; see [examples/README.md](https://github.com/openfetch-js/OpenFetch/blob/main/examples/README.md).

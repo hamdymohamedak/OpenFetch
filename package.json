@@ -101,12 +101,8 @@
     "express": "^5.2.1",
     "playwright": "^1.58.2",
     "tsx": "^4.21.0",
-<<<<<<< HEAD
-    "typescript": "^5.7.0"
-=======
     "typescript": "^5.7.0",
     "undici": "^7.25.0"
->>>>>>> feat/Progress-tracking
   },
   "ava": {
     "extensions": {

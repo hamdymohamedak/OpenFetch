@@ -6,12 +6,26 @@ on:
 
 jobs:
   test:
+<<<<<<< HEAD
     name: Node.js ${{ matrix.node-version }}
     runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
         node-version:
+=======
+    name: ${{ matrix.os }} / Node.js ${{ matrix.node-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        node-version:
+          - 18
+>>>>>>> feat/Progress-tracking
           - latest
           - 24
           - 22
@@ -22,5 +36,13 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
       - name: Install Playwright Browsers
+<<<<<<< HEAD
         run: npx playwright install --with-deps
+=======
+        if: runner.os == 'Linux'
+        run: npx playwright install --with-deps
+      - name: Install Playwright Browsers (non-Linux)
+        if: runner.os != 'Linux'
+        run: npx playwright install
+>>>>>>> feat/Progress-tracking
       - run: npm test

@@ -302,6 +302,70 @@ async function main() {
     }
   });
 
+  await check(
+    "memory cache returns cloned data so caller mutation does not poison cache",
+    async () => {
+      const store = new MemoryCacheStore({ maxEntries: 10 });
+      let hits = 0;
+      const server = http.createServer((_req, res) => {
+        hits++;
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ user: { name: "alice" } }));
+      });
+      await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const { port } = server.address();
+      try {
+        const cached = createClient({
+          baseURL: `http://127.0.0.1:${port}`,
+          middlewares: [createCacheMiddleware(store, { ttlMs: 60_000 })],
+        });
+        const first = await cached.get("/clone-check");
+        first.data.user.name = "mutated";
+        const second = await cached.get("/clone-check");
+        assert.equal(hits, 1);
+        assert.equal(second.data.user.name, "alice");
+      } finally {
+        server.close();
+        await new Promise((r) => server.once("close", r));
+      }
+    }
+  );
+
+  await check(
+    "memory cache coalesces concurrent misses for same key",
+    async () => {
+      const store = new MemoryCacheStore({ maxEntries: 10 });
+      let hits = 0;
+      const server = http.createServer((_req, res) => {
+        hits++;
+        setTimeout(() => {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: 1 }));
+        }, 80);
+      });
+      await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const { port } = server.address();
+      try {
+        const cached = createClient({
+          baseURL: `http://127.0.0.1:${port}`,
+          middlewares: [createCacheMiddleware(store, { ttlMs: 60_000 })],
+        });
+        const [a, b, c] = await Promise.all([
+          cached.get("/coalesce"),
+          cached.get("/coalesce"),
+          cached.get("/coalesce"),
+        ]);
+        assert.equal(hits, 1);
+        assert.deepEqual(a.data, { ok: 1 });
+        assert.deepEqual(b.data, { ok: 1 });
+        assert.deepEqual(c.data, { ok: 1 });
+      } finally {
+        server.close();
+        await new Promise((r) => server.once("close", r));
+      }
+    }
+  );
+
   await check("assertSafeHttpUrl blocks loopback IPv4 literal", async () => {
     assert.throws(() => assertSafeHttpUrl("http://127.0.0.1/foo"), /openfetch/);
   });

@@ -88,11 +88,40 @@ export type CacheMiddlewareOptions = {
 };
 
 function shallowCloneResponse(r: OpenFetchResponse): OpenFetchResponse {
+  const cloneCacheData = (value: unknown): unknown => {
+    if (value == null || typeof value !== "object") {
+      return value;
+    }
+
+    if (typeof structuredClone === "function") {
+      try {
+        return structuredClone(value);
+      } catch {
+        // Ignore and fall back to a plain recursive clone.
+      }
+    }
+
+    if (Array.isArray(value)) {
+      return value.map((item) => cloneCacheData(item));
+    }
+
+    const proto = Object.getPrototypeOf(value);
+    if (proto === Object.prototype || proto === null) {
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        out[k] = cloneCacheData(v);
+      }
+      return out;
+    }
+
+    return value;
+  };
+
   return {
     ...r,
     headers: { ...r.headers },
     config: { ...r.config },
-    data: r.data,
+    data: cloneCacheData(r.data),
   };
 }
 
@@ -177,6 +206,7 @@ export function createCacheMiddleware(
     (options?.methods ?? ["GET", "HEAD"]).map((m) => m.toUpperCase())
   );
   const inflight = new Map<string, Promise<void>>();
+  const inflightRequests = new Map<string, Promise<void>>();
   let authCacheKeyWarningIssued = false;
 
   return async (ctx, next) => {
@@ -243,10 +273,52 @@ export function createCacheMiddleware(
       }
     }
 
-    await next();
+    const pending = inflightRequests.get(key);
+    if (pending) {
+      try {
+        await pending;
+      } catch (err) {
+        ctx.error = err;
+        throw err;
+      }
+      const coalesced = store.get(key);
+      if (coalesced) {
+        const nowAfterWait = Date.now();
+        if (nowAfterWait < coalesced.expireAt) {
+          ctx.response = shallowCloneResponse(coalesced.response);
+          return;
+        }
+      }
+    }
 
-    if (ctx.error) return;
-    if (!ctx.response) return;
+    let resolveInflight: (() => void) | undefined;
+    let rejectInflight: ((reason?: unknown) => void) | undefined;
+    const inflightRequest = new Promise<void>((resolve, reject) => {
+      resolveInflight = resolve;
+      rejectInflight = reject;
+    });
+    if (resolveInflight == null || rejectInflight == null) {
+      throw new Error("openfetch: internal cache inflight setup failed");
+    }
+    inflightRequests.set(key, inflightRequest);
+
+    try {
+      await next();
+    } catch (err) {
+      rejectInflight?.(err);
+      throw err;
+    } finally {
+      inflightRequests.delete(key);
+    }
+
+    if (ctx.error) {
+      rejectInflight?.(ctx.error);
+      return;
+    }
+    if (!ctx.response) {
+      resolveInflight?.();
+      return;
+    }
 
     const storedAt = Date.now();
     store.set(key, {
@@ -254,5 +326,6 @@ export function createCacheMiddleware(
       freshUntil: storedAt + ttlMs,
       expireAt: storedAt + ttlMs + swrMs,
     });
+    resolveInflight?.();
   };
 }

@@ -44,11 +44,36 @@ function resolveVaryHeaderNames(explicit) {
     return [...byLower.values()];
 }
 function shallowCloneResponse(r) {
+    const cloneCacheData = (value) => {
+        if (value == null || typeof value !== "object") {
+            return value;
+        }
+        if (typeof structuredClone === "function") {
+            try {
+                return structuredClone(value);
+            }
+            catch {
+                // Ignore and fall back to a plain recursive clone.
+            }
+        }
+        if (Array.isArray(value)) {
+            return value.map((item) => cloneCacheData(item));
+        }
+        const proto = Object.getPrototypeOf(value);
+        if (proto === Object.prototype || proto === null) {
+            const out = {};
+            for (const [k, v] of Object.entries(value)) {
+                out[k] = cloneCacheData(v);
+            }
+            return out;
+        }
+        return value;
+    };
     return {
         ...r,
         headers: { ...r.headers },
         config: { ...r.config },
-        data: r.data,
+        data: cloneCacheData(r.data),
     };
 }
 function headersHaveAuthOrCookie(headers) {
@@ -115,6 +140,7 @@ export function createCacheMiddleware(store, options) {
     const varyHeaderNames = resolveVaryHeaderNames(options?.varyHeaderNames);
     const methods = new Set((options?.methods ?? ["GET", "HEAD"]).map((m) => m.toUpperCase()));
     const inflight = new Map();
+    const inflightRequests = new Map();
     let authCacheKeyWarningIssued = false;
     return async (ctx, next) => {
         if (ctx.request.memoryCache?.skip) {
@@ -158,16 +184,58 @@ export function createCacheMiddleware(store, options) {
                 return;
             }
         }
-        await next();
-        if (ctx.error)
+        const pending = inflightRequests.get(key);
+        if (pending) {
+            try {
+                await pending;
+            }
+            catch (err) {
+                ctx.error = err;
+                throw err;
+            }
+            const coalesced = store.get(key);
+            if (coalesced) {
+                const nowAfterWait = Date.now();
+                if (nowAfterWait < coalesced.expireAt) {
+                    ctx.response = shallowCloneResponse(coalesced.response);
+                    return;
+                }
+            }
+        }
+        let resolveInflight;
+        let rejectInflight;
+        const inflightRequest = new Promise((resolve, reject) => {
+            resolveInflight = resolve;
+            rejectInflight = reject;
+        });
+        if (resolveInflight == null || rejectInflight == null) {
+            throw new Error("openfetch: internal cache inflight setup failed");
+        }
+        inflightRequests.set(key, inflightRequest);
+        try {
+            await next();
+        }
+        catch (err) {
+            rejectInflight?.(err);
+            throw err;
+        }
+        finally {
+            inflightRequests.delete(key);
+        }
+        if (ctx.error) {
+            rejectInflight?.(ctx.error);
             return;
-        if (!ctx.response)
+        }
+        if (!ctx.response) {
+            resolveInflight?.();
             return;
+        }
         const storedAt = Date.now();
         store.set(key, {
             response: shallowCloneResponse(ctx.response),
             freshUntil: storedAt + ttlMs,
             expireAt: storedAt + ttlMs + swrMs,
         });
+        resolveInflight?.();
     };
 }

@@ -1,7 +1,7 @@
 {
   "name": "@hamdymohamedak/openfetch",
   "version": "1.0.0",
-  "description": "OpenFetch is a lean, TypeScript-first HTTP client on the native Fetch API—middleware and interceptors instead of a monolithic core, with plug-in retries, timeouts, lifecycle hooks, and structured debug logging. Optional in-memory caching, fluent chaining via the sugar export, and small utilities for safer URLs, idempotency keys, and redacted logs (headers and query strings) keep requests observable without leaking secrets. ESM-only, no required runtime dependencies beyond the platform `fetch`, tree-shakeable exports; optional peer `undici` enables Node HTTP/2 via `allowH2` or a custom `dispatcher`. Runs on Node 18+, browsers, Bun, Deno, and edge runtimes (e.g. Cloudflare Workers), with a design that plays well with Server Components",
+  "description": "OpenFetch is a lean, TypeScript-first HTTP client on the native Fetch API—middleware and interceptors instead of a monolithic core, with plug-in retries, timeouts, lifecycle hooks, and structured debug logging. Optional in-memory caching, fluent chaining via the sugar export, and small utilities for safer URLs, idempotency keys, and redacted logs (headers and query strings) keep requests observable without leaking secrets. ESM-only, zero runtime npm dependencies beyond the platform `fetch`, tree-shakeable exports; for Node HTTP/2 or custom agents, install `undici` yourself and pass `allowH2` or a `dispatcher` (never bundled or declared as a dependency of this package). Runs on Node 18+, browsers, Bun, Deno, and edge runtimes (e.g. Cloudflare Workers), with a design that plays well with Server Components",
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.js",
@@ -75,7 +75,26 @@
     "abortcontroller",
     "axios-alternative",
     "ky-alternative",
-    "openfetch"
+		"fetch",
+		"request",
+		"requests",
+		"http",
+		"https",
+		"fetching",
+		"get",
+		"url",
+		"curl",
+		"wget",
+		"net",
+		"network",
+		"ajax",
+		"api",
+		"rest",
+		"xhr",
+		"browser",
+		"got",
+		"axios",
+		"node-fetch"
   ],
   "license": "MIT",
   "repository": {
@@ -86,14 +105,6 @@
   "bugs": {
     "url": "https://github.com/openfetch-js/OpenFetch/issues"
   },
-  "peerDependencies": {
-    "undici": ">=6.0.0"
-  },
-  "peerDependenciesMeta": {
-    "undici": {
-      "optional": true
-    }
-  },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^22.10.0",
@@ -102,7 +113,7 @@
     "playwright": "^1.58.2",
     "tsx": "^4.21.0",
     "typescript": "^5.7.0",
-    "undici": "^7.25.0"
+    "undici": "^6.25.0"
   },
   "ava": {
     "extensions": {

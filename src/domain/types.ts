@@ -121,13 +121,13 @@ export type OpenFetchConfig = {
   onDownloadProgress?: (event: OpenFetchProgressEvent) => void;
   /**
    * Node.js (Undici): forwarded to `fetch` when the runtime supports it (Undici `dispatcher` option).
-   * Use for custom agents, proxies, or HTTP/2 — e.g. `new Agent({ allowH2: true })` from `undici`.
+   * Use for custom agents, proxies, or HTTP/2 — e.g. `new Agent({ allowH2: true })` from a **user-installed** `undici`.
    * When set, it takes precedence over {@link allowH2}.
    */
   dispatcher?: unknown;
   /**
    * Node.js: shorthand for Undici `new Agent({ allowH2: true })` passed as `fetch(..., { dispatcher })`.
-   * Requires the `undici` package to be installed (optional peer). Ignored when {@link dispatcher} is set.
+   * Requires a user-installed `undici` when true. Ignored when {@link dispatcher} is set.
    * No-op / may be ignored on runtimes whose `fetch` does not accept `dispatcher` (e.g. browsers).
    */
   allowH2?: boolean;

@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Agent } from "undici";
 import { createClient } from "../dist/index.js";
+
+/** Same as app code: undici is user-installed only; tests load it via dynamic import. */
+const { Agent } = await import("undici");
 
 test("dispatcher is passed through to fetch (Undici Agent)", async () => {
   const originalFetch = globalThis.fetch;

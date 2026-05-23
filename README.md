@@ -2,7 +2,7 @@
   <img
     src="https://cdn.jsdelivr.net/npm/@hamdymohamedak/openfetch@latest/docs/openfetch-logo.jpg"
     alt="openFetch official logo"
-    width="400"
+    width="420"
   />
 </p>
 

@@ -1,0 +1,218 @@
+# CodeRabbit — @hamdymohamedak/openfetch
+# Docs: https://docs.coderabbit.ai/reference/configuration
+# Re-read on each PR; validate with: @coderabbitai configuration
+
+language: en-US
+
+reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_in_walkthrough: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+  auto_title_placeholder: "@coderabbitai"
+  auto_title_instructions: |
+    Use conventional style: type(scope): short imperative subject (≤72 chars).
+    Types: feat, fix, docs, chore, refactor, test, security. Scope examples: retry, cache, fluent, transport.
+  review_status: true
+  commit_status: true
+  collapse_walkthrough: true
+  sequence_diagrams: true
+  changed_files_summary: true
+  estimate_code_review_effort: true
+  linked_issues_assessment: true
+  related_issues: true
+  related_prs: true
+  suggested_labels: true
+  auto_apply_labels: false
+  suggested_reviewers: true
+  auto_assign_reviewers: false
+  poem: false
+  in_progress_fortune: false
+
+  labeling_instructions:
+    - label: security
+      instructions: |
+        Apply when changes touch SSRF guards, URL redaction, auth header masking,
+        cache key isolation, assertSafeHttpUrl, or security-tests/.
+    - label: breaking-change
+      instructions: |
+        Apply when public exports, OpenFetchConfig fields, middleware signatures,
+        or semver-visible behavior change without a major version bump discussion.
+    - label: documentation
+      instructions: |
+        Apply when only README, CHANGELOG, CONTRIBUTING, docs/, or examples/ change.
+    - label: tests
+      instructions: |
+        Apply when test/, security-tests/, or ava/browser harness files change.
+
+  instructions: |
+    Repository: @hamdymohamedak/openfetch — ESM-only, TypeScript-first HTTP client on native `fetch`.
+    Architecture: domain (types, interceptors, errors) → runtime (client, middleware, retry, cache) →
+    transport (dispatch) → shared helpers → optional plugins & sugar fluent API.
+    Read docs/PROJECT_FLOW.md and CONTRIBUTING.md for lifecycle and contribution rules.
+
+    Non-negotiables:
+    - No CommonJS build; no runtime npm dependencies beyond platform `fetch`.
+    - Do not bundle or declare `undici` as a dependency; optional user-installed undici only via dispatcher/allowH2.
+    - No browser-only globals (`window`, `document`, `localStorage`, `WebSocket`, …) in library code.
+    - No XMLHttpRequest or alternate fetch shims as required dependencies.
+    - Implementation lives in `src/`; `dist/` is build output — never suggest editing dist by hand.
+    - Prefer new behavior as middleware/plugins over growing the monolithic client core.
+    - Prefer early returns; avoid deeply nested try/catch in middleware.
+    - Preserve tree-shakeable subpath exports: `.`, `./plugins`, `./sugar`.
+
+    Security & correctness focus (see SECURITY.md):
+    - SSRF: assertSafeHttpUrl / assertSafeUrl; DNS rebinding limits.
+    - Secrets: redact URLs/headers in debug; OpenFetchError.toShape defaults.
+    - Cache: varyHeaderNames / auth cache key warnings for multi-tenant GETs.
+    - Retry: idempotency for non-GET methods; abort signal propagation.
+
+    Do NOT comment on:
+    - Import ordering or formatting (no ESLint/Prettier in repo — skip style nitpicks unless they hide bugs).
+    - Missing JSDoc on internal helpers unless exported from package entrypoints.
+    - Suggesting axios/ky migration or adding polyfills.
+
+    When flagging issues, cite file paths and suggest minimal, idiomatic fixes compatible with Node 18+,
+    Bun, Deno, browsers, and edge workers (Cloudflare Workers).
+
+  path_filters:
+    - "!**/dist/**"
+    - "!**/node_modules/**"
+    - "!**/*.lock"
+    - "!**/package-lock.json"
+    - "!**/pnpm-lock.yaml"
+    - "!**/yarn.lock"
+    - "!**/coverage/**"
+    - "!**/__snapshots__/**"
+    - "!**/*.min.js"
+    - "!**/*.min.css"
+    - "!**/*.png"
+    - "!**/*.jpg"
+    - "!**/*.jpeg"
+    - "!**/*.gif"
+    - "!**/*.webp"
+    - "!**/*.ico"
+    - "!**/*.woff"
+    - "!**/*.woff2"
+    - "!demo/**"
+
+  path_instructions:
+    - path: "src/domain/**"
+      instructions: |
+        Domain layer must stay free of `fetch` and I/O.
+        Review: type safety of OpenFetchConfig, interceptor ordering contracts, OpenFetchError.toShape/toJSON
+        (no leaking auth, careful response data), Standard Schema validation paths, semver impact of exported types.
+
+    - path: "src/transport/**"
+      instructions: |
+        Transport owns fetch I/O only. Review: URL building, timeout/abort merging, body parsing,
+        validateStatus vs throwHttpErrors, transformRequest/transformResponse ordering, undici dispatcher
+        optional path without bundling undici.
+
+    - path: "src/runtime/**"
+      instructions: |
+        Review middleware stack order (each calls next()), retry backoff and per-attempt timeouts,
+        cache TTL/SWR and key derivation, client verb helpers merging defaults via mergeConfig.
+        Flag race conditions on concurrent requests sharing mutable defaults.
+
+    - path: "src/shared/**"
+      instructions: |
+        Shared utilities must be pure and runtime-agnostic. Review: assertSafeHttpUrl edge cases,
+        mergeAbortSignals cleanup, redactUrlQuery/maskHeaders completeness, idempotency key stability.
+
+    - path: "src/plugins/**"
+      instructions: |
+        Plugins extend behavior without breaking tree-shaking. Review: plugin option validation,
+        hook side effects, debug logging redaction, strictFetch semantics, no hidden global state.
+
+    - path: "src/sugar/**"
+      instructions: |
+        Fluent API: each terminal (.json, .raw, …) issues one HTTP call unless .memo() is used.
+        Verify docs match behavior; flag accidental double-fetch or unread body consumption.
+
+    - path: "test/**"
+      instructions: |
+        Tests use `node --test` and ava (browser). Require behavior assertions for changed code paths;
+        cover abort, retry, cache auth isolation, and URL redaction when touching those areas.
+        Avoid flaky timing; prefer deterministic servers from test/helpers.
+
+    - path: "security-tests/**"
+      instructions: |
+        Security regression suite — treat failures as release blockers. Verify new attack surfaces
+        (SSRF shapes, cache cross-tenant bleed, secret leakage in errors/logs) get explicit cases.
+
+    - path: "docs/**"
+      instructions: |
+        Docs must match src/ behavior and mermaid in PROJECT_FLOW.md. Flag API drift vs README exports table.
+
+    - path: ".github/workflows/**"
+      instructions: |
+        CI: ensure build + test:security gates remain. Pin third-party actions to SHA when adding steps;
+        do not log secrets; set job timeouts.
+
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 10
+    ignore_title_keywords:
+      - "WIP"
+      - "[skip review]"
+      - "DO NOT REVIEW"
+    ignore_usernames:
+      - "dependabot[bot]"
+      - "renovate[bot]"
+    base_branches:
+      - main
+
+  finishing_touches:
+    docstrings:
+      enabled: true
+    unit_tests:
+      enabled: true
+    simplify:
+      enabled: false
+
+  pre_merge_checks:
+    title:
+      mode: warning
+      requirements: |
+        Imperative, concise subject (≤72 chars). Mention breaking changes or security impact in title when applicable.
+    description:
+      mode: warning
+    linked_issue_assessment:
+      mode: warning
+    custom_checks:
+      - name: OpenFetch security gate
+        mode: warning
+        instructions: |
+          If the PR touches src/shared/assertSafeHttpUrl.ts, src/runtime/cache.ts, src/plugins/debug.ts,
+          src/domain/error.ts, or security-tests/, the PR description must mention SSRF/cache/secrets impact
+          or state "no security surface change". Fail if security-sensitive files change with an empty description.
+
+  tools:
+    eslint:
+      enabled: false
+    gitleaks:
+      enabled: true
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  opt_out: false
+  web_search:
+    enabled: true
+  code_guidelines:
+    enabled: true
+    file_patterns:
+      - "CONTRIBUTING.md"
+      - "SECURITY.md"
+      - "docs/PROJECT_FLOW.md"
+  learnings:
+    scope: local
+  issues:
+    scope: local
+  pull_requests:
+    scope: local

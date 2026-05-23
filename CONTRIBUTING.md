@@ -65,6 +65,29 @@ Use short, imperative subjects (e.g. `Add cache key override option`). Add a bod
 
 Maintainers may ask for tests, naming tweaks, or doc updates on the PR. Smaller, single-concern PRs are easier to review and merge.
 
+### AI-assisted review (CodeRabbit)
+
+This repository uses [CodeRabbit](https://coderabbit.ai) on every pull request. Configuration lives in [`.coderabbit.yaml`](../.coderabbit.yaml) at the repo root (review profile, path filters, and path-specific rules for `src/`, tests, and security).
+
+**What to expect**
+
+- An automatic walkthrough comment (summary, changed files, Mermaid sequence diagrams when flows change).
+- Inline comments on bugs, security (SSRF, cache isolation, secret redaction), and API/semver impact.
+- Optional pre-merge warnings for PR title/description and linked-issue coverage.
+
+**Working with the bot**
+
+- Reply on any review thread: `@coderabbitai explain` or ask for a focused refactor (e.g. `@coderabbitai suggest async/await error handling here`).
+- Re-run after pushing fixes: `@coderabbitai review`
+- Show active config: `@coderabbitai configuration`
+- Use **Commit suggestion** on GitHub when you agree with a proposed fix.
+
+**Tips for authors**
+
+- Link issues with `Closes #123` so linked-issue assessment can run.
+- Mention security impact when touching `assertSafeHttpUrl`, cache keys, debug redaction, or `security-tests/`.
+- Do not use `[skip review]` or `WIP` in the title unless you intend to skip automatic review.
+
 ## Code of conduct
 
 Be respectful and professional in issues and pull requests. Focus feedback on the work, not the person.
